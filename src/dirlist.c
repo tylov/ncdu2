@@ -37,7 +37,7 @@ int64_t dirlist_maxs       = 0,
 
 int    dirlist_sort_desc   = 1,
        dirlist_sort_col    = DL_COL_SIZE,
-       dirlist_sort_df     = 0,
+       dirlist_sort_df     = 0, // 1
        dirlist_hidden      = 0;
 
 /* private state vars */

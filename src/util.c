@@ -64,24 +64,17 @@ char *cropstr(const char *from, int s) {
 
 float formatsize(int64_t from, char **unit) {
   float r = from;
-  if (si) {
-    if(r < 1000.0f)   { *unit = " B"; }
-    else if(r < 1e6f) { *unit = "KB"; r/=1e3f; }
-    else if(r < 1e9f) { *unit = "MB"; r/=1e6f; }
-    else if(r < 1e12f){ *unit = "GB"; r/=1e9f; }
-    else if(r < 1e15f){ *unit = "TB"; r/=1e12f; }
-    else if(r < 1e18f){ *unit = "PB"; r/=1e15f; }
-    else              { *unit = "EB"; r/=1e18f; }
-  }
-  else {
-    if(r < 1000.0f)      { *unit = "  B"; }
-    else if(r < 1023e3f) { *unit = "KiB"; r/=1024.0f; }
-    else if(r < 1023e6f) { *unit = "MiB"; r/=1048576.0f; }
-    else if(r < 1023e9f) { *unit = "GiB"; r/=1073741824.0f; }
-    else if(r < 1023e12f){ *unit = "TiB"; r/=1099511627776.0f; }
-    else if(r < 1023e15f){ *unit = "PiB"; r/=1125899906842624.0f; }
-    else                 { *unit = "EiB"; r/=1152921504606846976.0f; }
-  }
+  int64_t si2 = si*si, si3 = si2*si, si4 = si3*si, si5 = si4*si, si6 = si5*si;
+  static char* units[][6] = {{"KB", "MB", "GB", "TB", "PB", "EB"},
+                             {"KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}};
+  char** t = units[si == 1000 ? 0 : 1];
+  if(r < si)       { *unit = " B"; }
+  else if(r < si2) { *unit = t[0]; r/=si; }
+  else if(r < si3) { *unit = t[1]; r/=si2; }
+  else if(r < si4) { *unit = t[2]; r/=si3; }
+  else if(r < si5) { *unit = t[3]; r/=si4; }
+  else if(r < si6) { *unit = t[4]; r/=si5; }
+  else             { *unit = t[5]; r/=si6; }
   return r;
 }
 
@@ -419,7 +412,8 @@ void addparentstats(struct dir *d, int64_t size, int64_t asize, uint64_t mtime, 
 /* Apparently we can just resume drawing after endwin() and ncurses will pick
  * up where it left. Probably not very portable...  */
 #define oom_msg "\nOut of memory, press enter to try again or Ctrl-C to give up.\n"
-#define wrap_oom(f) \
+#define wrap_oom(f) return f;
+#define wrap_oom_orig(f) \
   void *ptr;\
   char buf[128];\
   while((ptr = f) == NULL) {\

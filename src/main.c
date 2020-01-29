@@ -32,6 +32,7 @@
 
 #include <unistd.h>
 #include <sys/time.h>
+#include <locale.h>
 
 #include <yopt.h>
 
@@ -42,7 +43,7 @@ long update_delay = 100;
 int cachedir_tags = 0;
 int extended_info = 0;
 int follow_symlinks = 0;
-int confirm_quit = 0;
+int confirm_quit = -1;
 
 static int min_rows = 17, min_cols = 60;
 static int ncurses_init = 0;
@@ -120,11 +121,12 @@ static void argv_parse(int argc, char **argv) {
   char *export = NULL;
   char *import = NULL;
   char *dir = NULL;
+  int ext_info = 1;
 
   static yopt_opt_t opts[] = {
     { 'h', 0, "-h,-?,--help" },
     { 'q', 0, "-q" },
-    { 'v', 0, "-v,-V,--version" },
+    { 'v', 0, "-v,--version" },
     { 'x', 0, "-x" },
     { 'e', 0, "-e" },
     { 'r', 0, "-r" },
@@ -134,17 +136,19 @@ static void argv_parse(int argc, char **argv) {
     { '1', 0, "-1" },
     { '2', 0, "-2" },
     {  1,  1, "--exclude" },
+    { 'E', 0, "-E"},
     { 'X', 1, "-X,--exclude-from" },
     { 'L', 0, "-L,--follow-symlinks" },
     { 'C', 0, "--exclude-caches" },
     { 's', 0, "--si" },
     { 'Q', 0, "--confirm-quit" },
+    { 'Y', 0, "-Q" },
     { 'c', 1, "--color" },
     {0,0,NULL}
   };
 
   dir_ui = -1;
-  si = 0;
+  si = 1024;
 
   yopt_init(&yopt, argc, argv, opts);
   while((v = yopt_next(&yopt, &val)) != -1) {
@@ -152,37 +156,40 @@ static void argv_parse(int argc, char **argv) {
     case  0 : dir = val; break;
     case 'h':
       printf("ncdu <options> <directory>\n\n");
-      printf("  -h,--help                  This help message\n");
+      printf("  -h, --help                 This help message\n");
       printf("  -q                         Quiet mode, refresh interval 2 seconds\n");
-      printf("  -v,-V,--version            Print version\n");
-      printf("  -x                         Same filesystem\n");
-      printf("  -e                         Enable extended information\n");
+      printf("  -x                         Same filesystem only\n");
+      printf("  -e                         Disable extended information\n");
       printf("  -r                         Read only\n");
       printf("  -o FILE                    Export scanned directory to FILE\n");
       printf("  -f FILE                    Import scanned directory from FILE\n");
-      printf("  -0,-1,-2                   UI to use when scanning (0=none,2=full ncurses)\n");
+      printf("  -0, -1, -2                 UI to use when scanning (0=none,2=full ncurses)\n");
       printf("  --si                       Use base 10 (SI) prefixes instead of base 2\n");
       printf("  --exclude PATTERN          Exclude files that match PATTERN\n");
       printf("  -X, --exclude-from FILE    Exclude files that match any pattern in FILE\n");
       printf("  -L, --follow-symlinks      Follow symbolic links (excluding directories)\n");
       printf("  --exclude-caches           Exclude directories containing CACHEDIR.TAG\n");
-      printf("  --confirm-quit             Confirm quitting ncdu\n");
+      printf("  --confirm-quit             Confirm on quitting\n");
+      printf("  -Q                         Quit without confirmation\n");
       printf("  --color SCHEME             Set color scheme\n");
+      printf("  --version                  Print version\n");
       exit(0);
     case 'q': update_delay = 2000; break;
     case 'v':
       printf("ncdu %s\n", PACKAGE_VERSION);
       exit(0);
     case 'x': dir_scan_smfs = 1; break;
-    case 'e': extended_info = 1; break;
+    case 'e': ext_info = 1; break;
+    case 'E': ext_info = 0; break;
     case 'r': read_only++; break;
-    case 's': si = 1; break;
+    case 's': si = 1000; break;
     case 'o': export = val; break;
     case 'f': import = val; break;
     case '0': dir_ui = 0; break;
     case '1': dir_ui = 1; break;
     case '2': dir_ui = 2; break;
     case 'Q': confirm_quit = 1; break;
+    case 'Y': confirm_quit = 0; break;
     case  1 : exclude_add(val); break; /* --exclude */
     case 'X':
       if(exclude_addfile(val)) {
@@ -207,6 +214,8 @@ static void argv_parse(int argc, char **argv) {
       exit(1);
     }
   }
+  
+  extended_info = ext_info;
 
   if(export) {
     if(dir_export_init(export)) {
@@ -225,8 +234,13 @@ static void argv_parse(int argc, char **argv) {
     }
     if(strcmp(import, "-") == 0)
       ncurses_tty = 1;
-  } else
+    if (confirm_quit == -1) 
+      confirm_quit = 0;
+  } else {
+    if (confirm_quit == -1)
+     confirm_quit = 1;
     dir_scan_init(dir ? dir : ".");
+  }
 
   /* Use the single-line scan feedback by default when exporting to file, no
    * feedback when exporting to stdout. */
