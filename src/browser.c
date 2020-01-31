@@ -33,18 +33,19 @@
 #include <pwd.h>
 #include <grp.h>
 
-static int graph = 2, show_as = 0, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
+static int graph = 1, show_as = 0, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
 static char *message = NULL;
+
 
 
 
 static void browse_draw_info(struct dir *dr) {
   struct dir *t;
   struct dir_ext *e = dir_ext_ptr(dr);
-  char mbuf[128];
+  char mbuf[46];
   int i;
 
-  nccreate(13, 60, "Item info");
+  nccreate(11, 60, "Item info");
 
   if(dr->hlnk) {
     nctab(41, info_page == 0, 1, "Info");
@@ -60,14 +61,12 @@ static void browse_draw_info(struct dir *dr) {
       ncaddstr(4, 3, "Type:");
     else {
       ncaddstr(4, 3, "Mode:");
-      //ncaddstr(4, 21, "UID:");
-      //ncaddstr(4, 33, "GID:");
-      ncaddstr(5, 3, "User:");
-      ncaddstr(6, 3, "Group:");
-      ncaddstr(7, 3, "Last modified:");
+      ncaddstr(4, 21, "UID:");
+      ncaddstr(4, 33, "GID:");
+      ncaddstr(5, 3, "Last modified:");
     }
-    ncaddstr(8, 3, "   Disk usage:");
-    ncaddstr(9, 3, "Apparent size:");
+    ncaddstr(6, 3, "   Disk usage:");
+    ncaddstr(7, 3, "Apparent size:");
     attroff(A_BOLD);
 
     ncaddstr(2,  9, cropstr(dr->name, 49));
@@ -75,29 +74,21 @@ static void browse_draw_info(struct dir *dr) {
     ncaddstr(4,  9, dr->flags & FF_DIR ? "Directory" : dr->flags & FF_FILE ? "File" : "Other");
 
     if(e) {
-      char ubuf[128] = "no-user", gbuf[128] = "no-group";
-      
-      struct passwd* pw = getpwuid(e->uid);
-      struct group* gr = getgrgid(e->gid);
-      if (pw) strncpy(ubuf, pw->pw_name, 128);
-      if (gr) strncpy(gbuf, gr->gr_name, 128);
       ncaddstr(4, 9, fmtmode(e->mode));
-      ncaddstr(5, 10, ubuf);
-      ncaddstr(6, 10, gbuf);
-      //ncprint(4, 26, "%d", e->uid);
-      //ncprint(4, 38, "%d", e->gid);
+      ncprint(4, 26, "%d", e->uid);
+      ncprint(4, 38, "%d", e->gid);
       time_t t = (time_t)e->mtime;
       strftime(mbuf, sizeof(mbuf), "%Y-%m-%d %H:%M:%S %z", localtime(&t));
-      ncaddstr(7, 18, mbuf);
+      ncaddstr(5, 18, mbuf);
     }
 
-    ncmove(8, 18);
+    ncmove(6, 18);
     printsize(UIC_DEFAULT, dr->size);
     addstrc(UIC_DEFAULT, " (");
     addstrc(UIC_NUM, fullsize(dr->size));
     addstrc(UIC_DEFAULT, " B)");
 
-    ncmove(9, 18);
+    ncmove(7, 18);
     printsize(UIC_DEFAULT, dr->asize);
     addstrc(UIC_DEFAULT, " (");
     addstrc(UIC_NUM, fullsize(dr->asize));
@@ -110,14 +101,14 @@ static void browse_draw_info(struct dir *dr) {
         continue;
       if(i-info_start > 5)
         break;
-      ncaddstr(4+i-info_start, 3, cropstr(getpath(t), 54));
+      ncaddstr(2+i-info_start, 3, cropstr(getpath(t), 54));
     }
     if(t!=dr)
-      ncaddstr(10, 25, "-- more --");
+      ncaddstr(8, 25, "-- more --");
     break;
   }
 
-  ncaddstr(11, 31, "Press ");
+  ncaddstr(9, 31, "Press ");
   addchc(UIC_KEY, 'i');
   addstrc(UIC_DEFAULT, " to hide this window");
 }
@@ -191,12 +182,11 @@ static void browse_draw_items(struct dir *n, int *x) {
     return;
   else if(n->items < 1000*1000) {
     uic_set(cn);
-    printw("%d", n->items);
-    //printw("%6s", fullsize(n->items));
-  //} else if(n->items < 1000*1000) {
-  //  uic_set(cn);
-  //  printw("%5.1f", n->items / 1000.0);
-  //  addstrc(c, "k");
+    printw("%6s", fullsize(n->items));
+  } else if(n->items < 100*1000*1000) {
+      uic_set(cn);
+      printw("%5.2f", n->items / 1e6);
+      addstrc(c, "M");
   } else if(n->items < 1000*1000*1000) {
     uic_set(cn);
     printw("%5.1f", n->items / 1e6);
@@ -222,7 +212,7 @@ static void browse_draw_mtime(struct dir *n, int *x) {
   } else if (!strcmp(n->name, "..") && (n->parent->flags & FF_EXT)) {
     e = dir_ext_ptr(n->parent);
   } else {
-    snprintf(mbuf, sizeof(mbuf), "no mtime");
+    snprintf(mbuf, sizeof(mbuf), "....-..-.. ..:..");
     goto no_mtime;
   }
   t = (time_t)e->mtime;

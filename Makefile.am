@@ -1,7 +1,7 @@
 AM_CPPFLAGS=-I$(srcdir)/deps
-bin_PROGRAMS=ncdu
+bin_PROGRAMS=ncdu2
 
-ncdu_SOURCES=\
+ncdu2_SOURCES=\
 	src/browser.c\
 	src/delete.c\
 	src/dirlist.c\

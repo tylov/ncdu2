@@ -106,8 +106,8 @@ char *fullsize(int64_t from) {
   j = 0;
   while(i--) {
     dat[j++] = tmp[i];
-    if(i != 0 && i%3 == 0)
-      dat[j++] = thou_sep;
+    //if(i != 0 && i%3 == 0)
+      //dat[j++] = thou_sep;
   }
   dat[j] = '\0';
 
@@ -176,6 +176,21 @@ int ncresize(int minrows, int mincols) {
   return 0;
 }
 
+#if defined(FANCY_BOX)
+  #define acs_ulcorner ACS_ULCORNER
+  #define acs_urcorner ACS_URCORNER
+  #define acs_lrcorner ACS_LRCORNER
+  #define acs_llcorner ACS_LLCORNER
+  #define acs_hline ACS_HLINE
+  #define acs_vline ACS_VLINE
+#else
+  #define acs_ulcorner '+'
+  #define acs_urcorner '+'
+  #define acs_lrcorner '+'
+  #define acs_llcorner '+'
+  #define acs_hline '-'
+  #define acs_vline '|'
+#endif
 
 void nccreate(int height, int width, const char *title) {
   int i;
@@ -190,19 +205,19 @@ void nccreate(int height, int width, const char *title) {
 
   /* box() only works around curses windows, so create our own */
   move(subwinr, subwinc);
-  addch(ACS_ULCORNER);
+  addch(acs_ulcorner);
   for(i=0; i<width-2; i++)
-    addch(ACS_HLINE);
-  addch(ACS_URCORNER);
+    addch(acs_hline);
+  addch(acs_urcorner);
 
   move(subwinr+height-1, subwinc);
-  addch(ACS_LLCORNER);
+  addch(acs_llcorner);
   for(i=0; i<width-2; i++)
-    addch(ACS_HLINE);
-  addch(ACS_LRCORNER);
+    addch(acs_hline);
+  addch(acs_lrcorner);
 
-  mvvline(subwinr+1, subwinc, ACS_VLINE, height-2);
-  mvvline(subwinr+1, subwinc+width-1, ACS_VLINE, height-2);
+  mvvline(subwinr+1, subwinc, acs_vline, height-2);
+  mvvline(subwinr+1, subwinc+width-1, acs_vline, height-2);
 
   /* title */
   uic_set(UIC_BOX_TITLE);

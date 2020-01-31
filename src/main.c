@@ -159,7 +159,8 @@ static void argv_parse(int argc, char **argv) {
       printf("  -h, --help                 This help message\n");
       printf("  -q                         Quiet mode, refresh interval 2 seconds\n");
       printf("  -x                         Same filesystem only\n");
-      printf("  -e                         Disable extended information\n");
+      printf("  -e                         Enable extended information (default)\n");
+      printf("  -E                         Disable extended information\n");
       printf("  -r                         Read only\n");
       printf("  -o FILE                    Export scanned directory to FILE\n");
       printf("  -f FILE                    Import scanned directory from FILE\n");
