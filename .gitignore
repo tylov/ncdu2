@@ -14,7 +14,7 @@ missing
 .dirstamp
 *.o
 stamp-h1
-ncdu
+ncdu2
 ncdu.1
 *~
 *.swp
