@@ -33,7 +33,7 @@
 #include <pwd.h>
 #include <grp.h>
 
-static int graph = 1, show_as = 0, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
+static int graph = 3, show_as = 0, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
 static char *message = NULL;
 
 

@@ -68,13 +68,13 @@ float formatsize(int64_t from, char **unit) {
   static char* units[][6] = {{"KB", "MB", "GB", "TB", "PB", "EB"},
                              {"KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}};
   char** t = units[si == 1000 ? 0 : 1];
-  if(r < si)       { *unit = " B"; }
-  else if(r < si2) { *unit = t[0]; r/=si; }
-  else if(r < si3) { *unit = t[1]; r/=si2; }
-  else if(r < si4) { *unit = t[2]; r/=si3; }
-  else if(r < si5) { *unit = t[3]; r/=si4; }
-  else if(r < si6) { *unit = t[4]; r/=si5; }
-  else             { *unit = t[5]; r/=si6; }
+  if(r < 1e3)          { *unit = " B"; }
+  else if(r < 1e3*si)  { *unit = t[0]; r/=si; }
+  else if(r < 1e3*si2) { *unit = t[1]; r/=si2; }
+  else if(r < 1e3*si3) { *unit = t[2]; r/=si3; }
+  else if(r < 1e3*si4) { *unit = t[3]; r/=si4; }
+  else if(r < 1e3*si5) { *unit = t[4]; r/=si5; }
+  else                 { *unit = t[5]; r/=si6; }
   return r;
 }
 
