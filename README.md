@@ -1,4 +1,4 @@
-# idu
+# ncdu2 - forked from
 ncdu 1.14.1
 ===========
 
