@@ -61,20 +61,20 @@ char *cropstr(const char *from, int s) {
   return dat;
 }
 
-
 float formatsize(int64_t from, char **unit) {
   float r = from;
-  int64_t si2 = si*si, si3 = si2*si, si4 = si3*si, si5 = si4*si, si6 = si5*si;
-  static char* units[][6] = {{"KB", "MB", "GB", "TB", "PB", "EB"},
-                             {"KiB", "MiB", "GiB", "TiB", "PiB", "EiB"}};
-  char** t = units[si == 1000 ? 0 : 1];
-  if(r < 1e3)          { *unit = " B"; }
-  else if(r < 1e3*si)  { *unit = t[0]; r/=si; }
-  else if(r < 1e3*si2) { *unit = t[1]; r/=si2; }
-  else if(r < 1e3*si3) { *unit = t[2]; r/=si3; }
-  else if(r < 1e3*si4) { *unit = t[3]; r/=si4; }
-  else if(r < 1e3*si5) { *unit = t[4]; r/=si5; }
-  else                 { *unit = t[5]; r/=si6; }
+  int64_t b1 = si ? 1000 : 1024;
+  int64_t b2 = b1*b1, b3 = b2*b1, b4 = b3*b1, b5 = b4*b1, b6 = b5*b1;
+  static char* units[][6] = {{"KiB", "MiB", "GiB", "TiB", "PiB", "EiB"},
+                             {"KB", "MB", "GB", "TB", "PB", "EB"}};
+  char** t = units[si];
+  if      (r < 1000)    { *unit = " B"; }
+  else if (r < 1000*b1) { *unit = t[0]; r /= b1; }
+  else if (r < 1000*b2) { *unit = t[1]; r /= b2; }
+  else if (r < 1000*b3) { *unit = t[2]; r /= b3; }
+  else if (r < 1000*b4) { *unit = t[3]; r /= b4; }
+  else if (r < 1000*b5) { *unit = t[4]; r /= b5; }
+  else                  { *unit = t[5]; r /= b6; }
   return r;
 }
 

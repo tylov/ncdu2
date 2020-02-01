@@ -33,10 +33,10 @@
 #include <pwd.h>
 #include <grp.h>
 
-static int graph = 3, show_as = 0, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
+static int graph = 3, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
 static char *message = NULL;
 
-
+extern int si;
 
 
 static void browse_draw_info(struct dir *dr) {
@@ -135,6 +135,7 @@ static void browse_draw_graph(struct dir *n, int *x) {
   float pc = 0.0f;
   int o, i;
   enum ui_coltype c = n->flags & FF_BSEL ? UIC_SEL : UIC_DEFAULT;
+  int show_as = dirlist_sort_col == DL_COL_ASIZE;
 
   if(!graph)
     return;
@@ -231,8 +232,9 @@ no_mtime:
 
 static void browse_draw_item(struct dir *n, int row) {
   int x = 0;
-
   enum ui_coltype c = n->flags & FF_BSEL ? UIC_SEL : UIC_DEFAULT;
+  int show_as = dirlist_sort_col == DL_COL_ASIZE;
+  
   uic_set(c);
   mvhline(row, 0, ' ', wincols);
   move(row, 0);
@@ -240,8 +242,10 @@ static void browse_draw_item(struct dir *n, int row) {
   browse_draw_flag(n, &x);
   move(row, x);
 
-  if(n != dirlist_parent)
+  if(n != dirlist_parent) {
     printsize(c, show_as ? n->asize : n->size);
+    if (show_as) printw("'");
+  }
   x += 10;
   move(row, x);
 
@@ -277,7 +281,12 @@ void browse_draw() {
   mvhline(0, 0, ' ', wincols);
   mvprintw(0,0,"%s %s ~ Use the arrow keys to navigate, press ", PACKAGE_NAME, PACKAGE_VERSION);
   addchc(UIC_KEY_HD, '?');
-  addstrc(UIC_HD, " for help");
+  addstrc(UIC_HD, " or ");
+  addchc(UIC_KEY_HD, 'h');
+  addstrc(UIC_HD, " for help, and ");
+  addchc(UIC_KEY_HD, 'q');
+  addstrc(UIC_HD, " to quit.");
+  
   if(dir_import_active)
     mvaddstr(0, wincols-10, "[imported]");
   else if(read_only)
@@ -304,6 +313,16 @@ void browse_draw() {
     addstrc(UIC_HD, "  Items: ");
     uic_set(UIC_NUM_HD);
     printw("%d", t->parent->items);
+    addstrc(UIC_HD, "  Sort flags: ");
+    uic_set(UIC_NUM_HD);
+    printw("%c%c%c%c", 
+           dirlist_sort_id == 1 ? 'U' : (dirlist_sort_id == 2 ? 'G' : '-'),
+           dirlist_sort_df ? 'F' : '-', 
+           dirlist_sort_col == DL_COL_SIZE ? 'S' :
+           dirlist_sort_col == DL_COL_ASIZE ? 'A' :
+           dirlist_sort_col == DL_COL_ITEMS ? 'I' :
+           dirlist_sort_col == DL_COL_NAME ? 'N' : 'M',
+           dirlist_sort_desc ? ' ' : 'R');
   } else
     mvaddstr(winrows-1, 0, " No items to display.");
   uic_set(UIC_DEFAULT);
@@ -363,21 +382,18 @@ int browse_key(int ch) {
         info_page = 1;
       break;
     case KEY_RIGHT:
-    case 'l':
       if(sel->hlnk) {
         info_page = 1;
         catch++;
       }
       break;
     case KEY_LEFT:
-    case 'h':
       if(sel->hlnk) {
         info_page = 0;
         catch++;
       }
       break;
     case KEY_UP:
-    case 'k':
       if(sel->hlnk && info_page == 1) {
         if(info_start > 0)
           info_start--;
@@ -385,8 +401,6 @@ int browse_key(int ch) {
       }
       break;
     case KEY_DOWN:
-    case 'j':
-    case ' ':
       if(sel->hlnk && info_page == 1) {
         for(i=0,t=sel->hlnk; t!=sel; t=t->hlnk)
           i++;
@@ -401,13 +415,11 @@ int browse_key(int ch) {
     switch(ch) {
     /* selecting items */
     case KEY_UP:
-    case 'k':
       dirlist_select(dirlist_get(-1));
       dirlist_top(-1);
       info_start = 0;
       break;
     case KEY_DOWN:
-    case 'j':
       dirlist_select(dirlist_get(1));
       dirlist_top(1);
       info_start = 0;
@@ -435,44 +447,52 @@ int browse_key(int ch) {
       break;
 
     /* sorting items */
-    case 'n':
+    case 'n': // name
       dirlist_set_sort(DL_COL_NAME, dirlist_sort_col == DL_COL_NAME ? !dirlist_sort_desc : 0, DL_NOCHANGE);
       info_show = 0;
       break;
-    case 's':
-      i = show_as ? DL_COL_ASIZE : DL_COL_SIZE;
-      dirlist_set_sort(i, dirlist_sort_col == i ? !dirlist_sort_desc : 1, DL_NOCHANGE);
+    case 's': // size
+      dirlist_set_sort(DL_COL_SIZE, dirlist_sort_col == DL_COL_SIZE ? !dirlist_sort_desc : 1, DL_NOCHANGE);
       info_show = 0;
       break;
-    case 'C':
+/*      
+    case 'a': // asize
+      dirlist_set_sort(DL_COL_ASIZE, dirlist_sort_col == DL_COL_ASIZE ? !dirlist_sort_desc : 1, DL_NOCHANGE);
+      info_show = 0;
+      break;
+*/
+    case 'c': // count
       dirlist_set_sort(DL_COL_ITEMS, dirlist_sort_col == DL_COL_ITEMS ? !dirlist_sort_desc : 1, DL_NOCHANGE);
       info_show = 0;
       break;
-    case 'M':
+    case 'm': // time
       if (extended_info) {
         dirlist_set_sort(DL_COL_MTIME, dirlist_sort_col == DL_COL_MTIME ? !dirlist_sort_desc : 1, DL_NOCHANGE);
         info_show = 0;
       }
       break;
-    case 'e':
-      dirlist_set_hidden(!dirlist_hidden);
-      info_show = 0;
-      break;
-    case 't':
+    case 'f': // folder first
       dirlist_set_sort(DL_NOCHANGE, DL_NOCHANGE, !dirlist_sort_df);
       info_show = 0;
       break;
-    case 'a':
-      show_as = !show_as;
-      if(dirlist_sort_col == DL_COL_ASIZE || dirlist_sort_col == DL_COL_SIZE)
-        dirlist_set_sort(show_as ? DL_COL_ASIZE : DL_COL_SIZE, DL_NOCHANGE, DL_NOCHANGE);
-      info_show = 0;
+    case 'u':
+      if (extended_info) {
+        dirlist_sort_id = (dirlist_sort_id != 1 ? 1 : 0);
+        dirlist_set_sort(DL_NOCHANGE, DL_NOCHANGE, DL_NOCHANGE);
+        info_show = 0;
+      }
       break;
-
+    case 'g':
+      if (extended_info) {
+        dirlist_sort_id = (dirlist_sort_id != 2 ? 2 : 0);
+        dirlist_set_sort(DL_NOCHANGE, DL_NOCHANGE, DL_NOCHANGE);
+        info_show = 0;
+      }
+      break;      
+      
     /* browsing */
     case 10:
     case KEY_RIGHT:
-    case 'l':
       if(sel != NULL && sel->flags & FF_DIR) {
         dirlist_open(sel == dirlist_parent ? dirlist_par->parent : sel);
         dirlist_top(-3);
@@ -481,8 +501,6 @@ int browse_key(int ch) {
       break;
     case KEY_LEFT:
     case KEY_BACKSPACE:
-    case 'h':
-    case '<':
       if(dirlist_par && dirlist_par->parent != NULL) {
         dirlist_open(dirlist_par->parent);
         dirlist_top(-3);
@@ -511,26 +529,37 @@ int browse_key(int ch) {
           quit_init();
         else return 1;
       break;
-    case 'g':
+
+    case '1': // view sizes in 10^3 vs 2^10 base
+      si = !si;
+      dirlist_set_sort(DL_NOCHANGE, DL_NOCHANGE, DL_NOCHANGE);
+      info_show = 0;
+      break;      
+    case '2':
       if(++graph > 3)
         graph = 0;
       info_show = 0;
       break;
-    case 'c':
+    case '3':
       show_items = !show_items;
       break;
-    case 'm':
+    case '4':
       if (extended_info)
         show_mtime = !show_mtime;
+      break;
+  case 'x': // hidden
+      dirlist_set_hidden(!dirlist_hidden);
+      info_show = 0;
       break;
     case 'i':
       info_show = !info_show;
       break;
+    case 'h':
     case '?':
       help_init();
       info_show = 0;
       break;
-    case 'd':
+    case KEY_DC:
       if(read_only >= 1 || dir_import_active) {
         message = read_only >= 1
           ? "File deletion disabled in read-only mode."

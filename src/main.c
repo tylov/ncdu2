@@ -148,14 +148,14 @@ static void argv_parse(int argc, char **argv) {
   };
 
   dir_ui = -1;
-  si = 1024;
+  si = 0;
 
   yopt_init(&yopt, argc, argv, opts);
   while((v = yopt_next(&yopt, &val)) != -1) {
     switch(v) {
     case  0 : dir = val; break;
     case 'h':
-      printf("ncdu <options> <directory>\n\n");
+      printf("ncdu2 <options> <directory>\n");
       printf("  -h, --help                 This help message\n");
       printf("  -q                         Quiet mode, refresh interval 2 seconds\n");
       printf("  -x                         Same filesystem only\n");
@@ -170,20 +170,20 @@ static void argv_parse(int argc, char **argv) {
       printf("  -X, --exclude-from FILE    Exclude files that match any pattern in FILE\n");
       printf("  -L, --follow-symlinks      Follow symbolic links (excluding directories)\n");
       printf("  --exclude-caches           Exclude directories containing CACHEDIR.TAG\n");
-      printf("  --confirm-quit             Confirm on quitting\n");
       printf("  -Q                         Quit without confirmation\n");
+      printf("  --confirm-quit             Confirm on quitting\n");
       printf("  --color SCHEME             Set color scheme\n");
       printf("  --version                  Print version\n");
       exit(0);
     case 'q': update_delay = 2000; break;
     case 'v':
-      printf("ncdu %s\n", PACKAGE_VERSION);
+      printf("ncdu2 %s\n", PACKAGE_VERSION);
       exit(0);
     case 'x': dir_scan_smfs = 1; break;
     case 'e': ext_info = 1; break;
     case 'E': ext_info = 0; break;
     case 'r': read_only++; break;
-    case 's': si = 1000; break;
+    case 's': si = 1; break;
     case 'o': export = val; break;
     case 'f': import = val; break;
     case '0': dir_ui = 0; break;

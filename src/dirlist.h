@@ -73,7 +73,7 @@ extern struct dir *dirlist_parent;
 extern struct dir *dirlist_par;
 
 /* current sorting configuration (set with dirlist_set_sort()) */
-extern int dirlist_sort_desc, dirlist_sort_col, dirlist_sort_df;
+extern int dirlist_sort_desc, dirlist_sort_col, dirlist_sort_df, dirlist_sort_id;
 
 /* set with dirlist_set_hidden() */
 extern int dirlist_hidden;

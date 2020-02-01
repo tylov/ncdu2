@@ -32,24 +32,26 @@
 int page, start;
 
 
-#define KEYS 19
+#define KEYS 21
 char *keys[KEYS*2] = {
 /*|----key----|  |----------------description----------------|*/
-        "up, k", "Move cursor up",
-      "down, j", "Move cursor down",
-  "right/enter", "Open selected directory",
-   "left, <, h", "Open parent directory",
+           "Up", "Move cursor up",
+         "Down", "Move cursor down",
+  "Right/Enter", "Open selected directory",
+         "Left", "Open parent directory",
             "n", "Sort by name (ascending/descending)",
             "s", "Sort by size (ascending/descending)",
-            "C", "Sort by items (ascending/descending)",
-            "M", "Sort by mtime (-e flag)",
-            "d", "Delete selected file or directory",
-            "t", "Toggle dirs before files when sorting",
-            "g", "Show percentage and/or graph",
-            "a", "Toggle between apparent size and disk usage",
-            "c", "Toggle display of child item counts",
-            "m", "Toggle display of latest mtime (-e flag)",
-            "e", "Show/hide hidden or excluded files",
+            "c", "Sort by items (ascending/descending)",
+            "m", "Sort by mtime (ext info)",
+            "f", "Sort folders first",
+            "u", "Sort by user, then group (ext info)",
+            "g", "Sort by group, then user (ext info)",
+       "Delete", "Delete selected file or directory",
+            "1", "Toggle 1024/1000 base size units",
+            "2", "Toggle percentage and/or graph",
+            "3", "Toggle display of child item counts",
+            "4", "Toggle display of extended info",
+            "x", "Toggle display of excluded/hidden files",
             "i", "Show information about selected item",
             "r", "Recalculate the current directory",
             "b", "Spawn shell in current directory",
@@ -62,7 +64,7 @@ void help_draw() {
 
   browse_draw();
 
-  nccreate(15, 60, "ncdu help");
+  nccreate(15, 60, "ncdu2 help");
   ncaddstr(13, 42, "Press ");
   uic_set(UIC_KEY);
   addch('q');
@@ -152,6 +154,7 @@ void help_draw() {
       ncprint( y+4, x+30, "%s", PACKAGE_VERSION);
       ncaddstr( 9,  7, "Written by Yoran Heling <projects@yorhel.nl>");
       ncaddstr(10, 16, "https://dev.yorhel.nl/ncdu/");
+      ncaddstr(11,  7, "Modified by Tyge Løvset <tylo@norceresearch.no>");
       break;
   }
 }
@@ -167,26 +170,22 @@ int help_key(int ch) {
       break;
     case KEY_RIGHT:
     case KEY_NPAGE:
-    case 'l':
       if(++page > 3)
         page = 3;
       start = 0;
       break;
     case KEY_LEFT:
     case KEY_PPAGE:
-    case 'h':
       if(--page < 1)
         page = 1;
       start = 0;
       break;
     case KEY_DOWN:
     case ' ':
-    case 'j':
       if(start < KEYS-10)
         start++;
       break;
     case KEY_UP:
-    case 'k':
       if(start > 0)
         start--;
       break;
