@@ -43,7 +43,7 @@ long update_delay = 100;
 int cachedir_tags = 0;
 int extended_info = 0;
 int follow_symlinks = 0;
-int confirm_quit = -1;
+int confirm_quit = 1;
 
 static int min_rows = 17, min_cols = 60;
 static int ncurses_init = 0;
@@ -142,7 +142,7 @@ static void argv_parse(int argc, char **argv) {
     { 'C', 0, "--exclude-caches" },
     { 's', 0, "--si" },
     { 'Q', 0, "--confirm-quit" },
-    { 'Y', 0, "-Q" },
+    { 'y', 0, "-y" },
     { 'c', 1, "--color" },
     {0,0,NULL}
   };
@@ -170,8 +170,8 @@ static void argv_parse(int argc, char **argv) {
       printf("  -X, --exclude-from FILE    Exclude files that match any pattern in FILE\n");
       printf("  -L, --follow-symlinks      Follow symbolic links (excluding directories)\n");
       printf("  --exclude-caches           Exclude directories containing CACHEDIR.TAG\n");
-      printf("  -Q                         Quit without confirmation\n");
-      printf("  --confirm-quit             Confirm on quitting\n");
+      printf("  --confirm-quit             Confirm on quitting (default)\n");
+      printf("  -y                         Quit without confirmation\n");
       printf("  --color SCHEME             Set color scheme\n");
       printf("  --version                  Print version\n");
       exit(0);
@@ -190,7 +190,7 @@ static void argv_parse(int argc, char **argv) {
     case '1': dir_ui = 1; break;
     case '2': dir_ui = 2; break;
     case 'Q': confirm_quit = 1; break;
-    case 'Y': confirm_quit = 0; break;
+    case 'y': confirm_quit = 0; break;
     case  1 : exclude_add(val); break; /* --exclude */
     case 'X':
       if(exclude_addfile(val)) {
@@ -235,11 +235,7 @@ static void argv_parse(int argc, char **argv) {
     }
     if(strcmp(import, "-") == 0)
       ncurses_tty = 1;
-    if (confirm_quit == -1) 
-      confirm_quit = 0;
   } else {
-    if (confirm_quit == -1)
-     confirm_quit = 1;
     dir_scan_init(dir ? dir : ".");
   }
 
