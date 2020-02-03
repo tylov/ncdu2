@@ -63,20 +63,22 @@ static inline int cmp_mtime(struct dir *x, struct dir*y) {
 
 
 static inline int cmp_user(struct dir *x, struct dir *y) {
-  char x_id[16], y_id[16];
-  int xi = dir_ext_ptr(x)->uid, yi = dir_ext_ptr(y)->uid;
+  char x_id[64] = {0}, y_id[64] = {0};
+  int xi = x->flags & FF_EXT ? dir_ext_ptr(x)->uid : 0;
+  int yi = y->flags & FF_EXT ? dir_ext_ptr(y)->uid : 0;
   if (xi == yi) return 0;
-  strncpy(x_id, getpwuid(xi)->pw_name, 15);
-  strncpy(y_id, getpwuid(yi)->pw_name, 15);
+  strncpy(x_id, getpwuid(xi)->pw_name, 63);
+  strncpy(y_id, getpwuid(yi)->pw_name, 63);
   return strcmp(y_id, x_id);
 }
 
 static inline int cmp_group(struct dir *x, struct dir *y) {
-  char x_id[16], y_id[16];
-  int xi = dir_ext_ptr(x)->gid, yi = dir_ext_ptr(y)->gid;
+  char x_id[64] = {0}, y_id[64] = {0};
+  int xi = x->flags & FF_EXT ? dir_ext_ptr(x)->gid : 0;
+  int yi = y->flags & FF_EXT ? dir_ext_ptr(y)->gid : 0;
   if (xi == yi) return 0;
-  strncpy(x_id, getgrgid(xi)->gr_name, 15);
-  strncpy(y_id, getgrgid(yi)->gr_name, 15);
+  strncpy(x_id, getgrgid(xi)->gr_name, 63);
+  strncpy(y_id, getgrgid(yi)->gr_name, 63);
   return strcmp(y_id, x_id);
 }
 

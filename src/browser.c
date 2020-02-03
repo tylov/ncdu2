@@ -315,14 +315,15 @@ void browse_draw() {
     printw("%d", t->parent->items);
     addstrc(UIC_HD, "  Sort flags: ");
     uic_set(UIC_NUM_HD);
-    printw("%c%c%c%c", 
+    printw("%c%c%c%c%c", 
            dirlist_sort_id == 1 ? 'U' : (dirlist_sort_id == 2 ? 'G' : '-'),
            dirlist_sort_df ? 'F' : '-', 
            dirlist_sort_col == DL_COL_SIZE ? 'S' :
            dirlist_sort_col == DL_COL_ASIZE ? 'A' :
            dirlist_sort_col == DL_COL_ITEMS ? 'C' :
            dirlist_sort_col == DL_COL_NAME ? 'N' : 'M',
-           dirlist_sort_desc ? ' ' : '^');
+           dirlist_sort_desc ? ' ' : '^',
+           dirlist_hidden ? 'x' : ' ');
   } else
     mvaddstr(winrows-1, 0, " No items to display.");
   uic_set(UIC_DEFAULT);
