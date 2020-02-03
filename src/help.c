@@ -37,15 +37,15 @@ char *keys[KEYS*2] = {
 /*|----key----|  |----------------description----------------|*/
            "Up", "Move cursor up",
          "Down", "Move cursor down",
-  "Right/Enter", "Open selected directory",
-         "Left", "Open parent directory",
-            "n", "Sort by name (ascending/descending)",
-            "s", "Sort by size (ascending/descending)",
-            "c", "Sort by items (ascending/descending)",
-            "m", "Sort by mtime (ext info)",
-            "f", "Sort folders first",
-            "u", "Sort by user, then group (ext info)",
-            "g", "Sort by group, then user (ext info)",
+  "Enter/Right", "Open selected directory",
+ "Backspc/Left", "Open parent directory",
+            "n", "Sort by name (asc./desc.)",
+            "s", "Sort by size (asc./desc.)",
+            "c", "Sort by item count (asc./desc.)",
+            "m", "Sort by mod. time (ext info)",
+            "f", "Toggle folders first",
+            "u", "Toggle sort user first (ext info)",
+            "g", "Toggle sort group first (ext info)",
        "Delete", "Delete selected file or directory",
             "1", "Toggle 1024/1000 base size units",
             "2", "Toggle percentage and/or graph",
@@ -55,7 +55,7 @@ char *keys[KEYS*2] = {
             "i", "Show information about selected item",
             "r", "Recalculate the current directory",
             "b", "Spawn shell in current directory",
-            "q", "Quit ncdu"
+            "q", "Quit ncdu2"
 };
 
 

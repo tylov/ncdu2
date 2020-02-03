@@ -320,9 +320,9 @@ void browse_draw() {
            dirlist_sort_df ? 'F' : '-', 
            dirlist_sort_col == DL_COL_SIZE ? 'S' :
            dirlist_sort_col == DL_COL_ASIZE ? 'A' :
-           dirlist_sort_col == DL_COL_ITEMS ? 'I' :
+           dirlist_sort_col == DL_COL_ITEMS ? 'C' :
            dirlist_sort_col == DL_COL_NAME ? 'N' : 'M',
-           dirlist_sort_desc ? ' ' : 'R');
+           dirlist_sort_desc ? ' ' : '^');
   } else
     mvaddstr(winrows-1, 0, " No items to display.");
   uic_set(UIC_DEFAULT);

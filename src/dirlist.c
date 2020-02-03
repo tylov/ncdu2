@@ -62,7 +62,7 @@ static inline int cmp_mtime(struct dir *x, struct dir*y) {
 }
 
 
-static inline int cmp_uid(struct dir *x, struct dir *y) {
+static inline int cmp_user(struct dir *x, struct dir *y) {
   char x_id[16], y_id[16];
   int xi = dir_ext_ptr(x)->uid, yi = dir_ext_ptr(y)->uid;
   if (xi == yi) return 0;
@@ -71,7 +71,7 @@ static inline int cmp_uid(struct dir *x, struct dir *y) {
   return strcmp(y_id, x_id);
 }
 
-static inline int cmp_gid(struct dir *x, struct dir *y) {
+static inline int cmp_group(struct dir *x, struct dir *y) {
   char x_id[16], y_id[16];
   int xi = dir_ext_ptr(x)->gid, yi = dir_ext_ptr(y)->gid;
   if (xi == yi) return 0;
@@ -88,12 +88,10 @@ static int dirlist_cmp(struct dir *x, struct dir *y) {
   #define CMP_EVAL(cmp) r = cmp; if (r != 0) return dirlist_sort_desc ? -r : r
 
   if (dirlist_sort_id == 1) {
-    CMP_EVAL(cmp_uid(x, y));
-    CMP_EVAL(cmp_gid(x, y));
+    CMP_EVAL(cmp_user(x, y));
   }
   else if (dirlist_sort_id == 2) {
-    CMP_EVAL(cmp_gid(x, y));
-    CMP_EVAL(cmp_uid(x, y));
+    CMP_EVAL(cmp_group(x, y));
   }
 
   /* dirs are always before files when that option is set */
@@ -117,6 +115,7 @@ static int dirlist_cmp(struct dir *x, struct dir *y) {
   switch (dirlist_sort_col) {
     case DL_COL_MTIME:
         CMP_EVAL(cmp_mtime(x, y));
+        CMP_EVAL(CMP_MEMB(size));
         CMP_EVAL(strcmp(x->name, y->name));
         break;
  	case DL_COL_NAME:
