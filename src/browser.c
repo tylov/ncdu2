@@ -202,30 +202,31 @@ static void browse_draw_items(struct dir *n, int *x) {
 
 static void browse_draw_mtime(struct dir *n, int *x) {
   enum ui_coltype c = n->flags & FF_BSEL ? UIC_SEL : UIC_DEFAULT;
-  char mbuf[64], ubuf[32] = "no-user", gbuf[32] = "no-group";
-  struct dir_ext *e;
-  time_t t;
-  struct passwd* pw;
-  struct group* gr;
+  char mbuf[64], mdbuf[32], ubuf[32], gbuf[32];
+  struct dir_ext *e = NULL;
 
   if (n->flags & FF_EXT) {
     e = dir_ext_ptr(n);
   } else if (!strcmp(n->name, "..") && (n->parent->flags & FF_EXT)) {
     e = dir_ext_ptr(n->parent);
+  } 
+  if (e) {
+    time_t t = (time_t) e->mtime;
+    struct passwd* pw = getpwuid(e->uid);
+    struct group* gr = getgrgid(e->gid);
+
+    strftime(mbuf, sizeof(mbuf), "%Y-%m-%d %H:%M", localtime(&t));
+    strcpy(mdbuf, fmtmode(e->mode));
+    if (pw) strncpy(ubuf, pw->pw_name, 8);
+    if (gr) strncpy(gbuf, gr->gr_name, 8);
   } else {
-    snprintf(mbuf, sizeof(mbuf), "....-..-.. ..:..");
-    goto no_mtime;
+    sprintf(mbuf, "....-..-.. ..:..");
+    sprintf(mdbuf, "----------");
+    sprintf(ubuf, "_user");
+    sprintf(gbuf, "_group");
   }
-  t = (time_t)e->mtime;
-  strftime(mbuf, sizeof(mbuf), "%Y-%m-%d %H:%M", localtime(&t));
-  pw = getpwuid(e->uid);
-  gr = getgrgid(e->gid);
-  if (pw) strncpy(ubuf, pw->pw_name, 8);
-  if (gr) strncpy(gbuf, gr->gr_name, 8);
-  
   uic_set(c == UIC_SEL ? UIC_NUM_SEL : UIC_NUM);
-no_mtime:
-  printw("%s  %s %s,%s", mbuf, fmtmode(e->mode), ubuf, gbuf);
+  printw("%s  %s %s,%s", mbuf, mdbuf, ubuf, gbuf);
   *x += 47;
 }
 
