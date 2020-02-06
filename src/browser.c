@@ -113,9 +113,8 @@ static void browse_draw_info(struct dir *dr) {
   addstrc(UIC_DEFAULT, " to hide this window");
 }
 
-
-static void browse_draw_flag(struct dir *n, int *x) {
-  addchc(n->flags & FF_BSEL ? UIC_FLAG_SEL : UIC_FLAG,
+static char get_draw_flag(struct dir *n) {
+    return
       n == dirlist_parent ? ' ' :
         n->flags & FF_EXL ? '<' :
         n->flags & FF_ERR ? '!' :
@@ -126,7 +125,11 @@ static void browse_draw_flag(struct dir *n, int *x) {
     || n->flags & FF_DIR) ? '@' :
         n->flags & FF_DIR
         && n->sub == NULL ? 'e' :
-                            ' ');
+                            ' ' ;
+}
+
+static void browse_draw_flag(struct dir *n, int *x) {
+  addchc(n->flags & FF_BSEL ? UIC_FLAG_SEL : UIC_FLAG, get_draw_flag(n));
   *x += 2;
 }
 
@@ -171,13 +174,77 @@ static void browse_draw_graph(struct dir *n, int *x) {
 }
 
 
-static void browse_draw_items(struct dir *n, int *x) {
+static void get_draw_graph(struct dir *n, int* x, char *out) {
+  float pc = 0.0f;
+  int o, i;
+  int show_as = dirlist_sort_col == DL_COL_ASIZE;
+  char buf[64];
+  int add = graph == 1 ? 13 : graph == 2 ? 9 : 20;
+  sprintf(out, "%22s", " ");
+  
+  if(graph == 0) {
+    return;
+  }
+
+  *x += add;
+
+  if(n == dirlist_parent) {
+    return;
+  }
+
+  *out++ = '[';
+
+  /* percentage (6 columns) */
+  if(graph == 2 || graph == 3) {
+    pc = (float)(show_as ? n->parent->asize : n->parent->size);
+    if(pc < 1)
+      pc = 1.0f;
+    sprintf(buf, "%5.1f%%", ((float)(show_as ? n->asize : n->size) / pc) * 100.0f);
+    strncpy(out, buf, 6);
+    out += 6;
+  }
+
+  if(graph == 3)
+    *out++ = ' ';
+
+  /* graph (10 columns) */
+  if(graph == 1 || graph == 3) {
+    o = (int)(10.0f*(float)(show_as ? n->asize : n->size) / (float)(show_as ? dirlist_maxa : dirlist_maxs));
+    for(i=0; i<10; i++)
+      *out++ = (i < o ? '#' : ' ');
+  }
+  strcpy(out, "]  ");
+}
+
+
+static void get_draw_count(struct dir *n, int *x, char* out) {
+  if(!show_items) {
+    *out = '\0';
+    return;
+  }
+  *x += 7;
+  if (n->items == 0) {
+    sprintf(out, "          ");
+  } else if (n->items < 1000*1000) {
+    sprintf(out, "%6d  ", n->items);
+  } else if (n->items < 100*1000*1000) {
+    sprintf(out, "%5.2fM  ", n->items / 1e6);
+  } else if (n->items < 1000*1000*1000) {
+    sprintf(out, "%5.1fM  ", n->items / 1e6);
+  } else {
+    sprintf(out, "%5.2fB  ", n->items / 1e9);
+  }
+}
+
+
+
+static void browse_draw_count(struct dir *n, int *x) {
   enum ui_coltype c = n->flags & FF_BSEL ? UIC_SEL : UIC_DEFAULT;
   enum ui_coltype cn = c == UIC_SEL ? UIC_NUM_SEL : UIC_NUM;
 
   if(!show_items)
     return;
-  *x += 7;
+  *x += 8;
 
   if(!n->items)
     return;
@@ -200,10 +267,12 @@ static void browse_draw_items(struct dir *n, int *x) {
 }
 
 
-static void browse_draw_mtime(struct dir *n, int *x) {
-  enum ui_coltype c = n->flags & FF_BSEL ? UIC_SEL : UIC_DEFAULT;
-  char mbuf[64], mdbuf[32], ubuf[32], gbuf[32];
+static void get_draw_mtime(struct dir *n, int *x, char* out) {
+  char mbuf[64], mdbuf[32], ubuf[32] = {0}, gbuf[32] = {0};
   struct dir_ext *e = NULL;
+  struct passwd* pw;
+  struct group* gr;
+  time_t t;
 
   if (n->flags & FF_EXT) {
     e = dir_ext_ptr(n);
@@ -211,23 +280,29 @@ static void browse_draw_mtime(struct dir *n, int *x) {
     e = dir_ext_ptr(n->parent);
   } 
   if (e) {
-    time_t t = (time_t) e->mtime;
-    struct passwd* pw = getpwuid(e->uid);
-    struct group* gr = getgrgid(e->gid);
-
+    t = (time_t) e->mtime;
     strftime(mbuf, sizeof(mbuf), "%Y-%m-%d %H:%M", localtime(&t));
     strcpy(mdbuf, fmtmode(e->mode));
-    if (pw) strncpy(ubuf, pw->pw_name, 8);
-    if (gr) strncpy(gbuf, gr->gr_name, 8);
+    pw = getpwuid(e->uid);
+    if (pw) strcpy(ubuf, cropstr2(pw->pw_name, 9));
+    gr = getgrgid(e->gid);
+    if (gr) strcpy(gbuf, cropstr2(gr->gr_name, 9));
   } else {
-    sprintf(mbuf, "....-..-.. ..:..");
-    sprintf(mdbuf, "----------");
-    sprintf(ubuf, "_user");
-    sprintf(gbuf, "_group");
+    sprintf(mbuf, "....-..-.. ..:..  ");
+    sprintf(mdbuf, "----------  ");
+    sprintf(ubuf, "__user     ");
+    sprintf(gbuf, "__group    ");
   }
+  sprintf(out, "%s  %s  %-9s %-9s   ", mbuf, mdbuf, ubuf, gbuf);
+  *x += 50;
+}
+
+static void browse_draw_mtime(struct dir *n, int *x) {
+  enum ui_coltype c = n->flags & FF_BSEL ? UIC_SEL : UIC_DEFAULT;
+  char buf[64]; // 50 needed
+  get_draw_mtime(n, x, buf);
   uic_set(c == UIC_SEL ? UIC_NUM_SEL : UIC_NUM);
-  printw("%s  %s %s,%s", mbuf, mdbuf, ubuf, gbuf);
-  *x += 47;
+  printw(buf);
 }
 
 
@@ -253,8 +328,7 @@ static void browse_draw_item(struct dir *n, int row) {
   browse_draw_graph(n, &x);
   move(row, x);
 
-  browse_draw_items(n, &x);
-  x += 1;
+  browse_draw_count(n, &x);
   move(row, x);
 
   if (extended_info && show_mtime) {
@@ -266,6 +340,41 @@ static void browse_draw_item(struct dir *n, int row) {
     c = c == UIC_SEL ? UIC_DIR_SEL : UIC_DIR;
   addchc(c, n->flags & FF_DIR ? '/' : ' ');
   addstrc(c, cropstr(n->name, wincols-x-1));
+}
+
+
+static void get_draw_item(struct dir *n, char *line) {
+  int x = 0;
+  int show_as = dirlist_sort_col == DL_COL_ASIZE;
+
+  // flags
+  sprintf(&line[x], "%c ", get_draw_flag(n));
+  x += 2;
+
+  sprintf(&line[x], "%s", cropstr(n->name, 255));
+
+  // size
+  if(n != dirlist_parent) {
+    char* fmt;
+    float value = formatsize(show_as ? n->asize : n->size, &fmt);
+    sprintf(&line[x], "%5.1f %s%c  ", value, fmt, show_as ? '\'' : ' ');
+  } else {
+    sprintf(&line[x], "              ");
+  }
+  x += 10;
+  
+  // graph
+  get_draw_graph(n, &x, &line[x]);
+  // item count
+  get_draw_count(n, &x, &line[x]);
+  // mod time
+  if (extended_info && show_mtime) {
+    get_draw_mtime(n, &x, &line[x]);
+  }
+  // dir slash
+  sprintf(&line[x++], "%c", (n->flags & FF_DIR ? '/' : ' '));
+  // file/dir name
+  sprintf(&line[x], "%s", cropstr(n->name, 255));
 }
 
 
@@ -584,6 +693,22 @@ int browse_key(int ch) {
         break;
       }
       shell_init();
+      break;
+
+    case 'p': {
+        int i;
+        char line[4096];
+        FILE* fp = fopen("print.txt", "w");
+        /* get start position */
+        struct dir *t = dirlist_get_head();
+            
+        /* print the list to a file */
+        for(i = 0; t != NULL; t = dirlist_next(t), ++i) {
+          get_draw_item(t, line);
+          fprintf(fp, "%s\n", line);
+        }
+        fclose(fp);
+      }
       break;
     }
 

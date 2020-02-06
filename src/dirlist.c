@@ -45,6 +45,9 @@ int    dirlist_sort_desc   = 1,
 /* private state vars */
 static struct dir *parent_alloc, *head, *head_real, *selected, *top = NULL;
 
+struct dir *dirlist_get_head(void) {
+    return head;
+}
 
 
 #define ISHIDDEN(d) (dirlist_hidden && (d) != dirlist_parent && (\
@@ -66,9 +69,12 @@ static inline int cmp_user(struct dir *x, struct dir *y) {
   char x_id[64] = {0}, y_id[64] = {0};
   int xi = x->flags & FF_EXT ? dir_ext_ptr(x)->uid : 0;
   int yi = y->flags & FF_EXT ? dir_ext_ptr(y)->uid : 0;
+  struct passwd* pw;
   if (xi == yi) return 0;
-  strncpy(x_id, getpwuid(xi)->pw_name, 63);
-  strncpy(y_id, getpwuid(yi)->pw_name, 63);
+  pw = getpwuid(xi);
+  if (pw) strncpy(x_id, pw->pw_name, 63);
+  pw = getpwuid(yi);
+  if (pw) strncpy(y_id, pw->pw_name, 63);
   return strcmp(y_id, x_id);
 }
 
@@ -76,9 +82,12 @@ static inline int cmp_group(struct dir *x, struct dir *y) {
   char x_id[64] = {0}, y_id[64] = {0};
   int xi = x->flags & FF_EXT ? dir_ext_ptr(x)->gid : 0;
   int yi = y->flags & FF_EXT ? dir_ext_ptr(y)->gid : 0;
+  struct group* gr;
   if (xi == yi) return 0;
-  strncpy(x_id, getgrgid(xi)->gr_name, 63);
-  strncpy(y_id, getgrgid(yi)->gr_name, 63);
+  gr = getgrgid(xi);
+  if (gr) strncpy(x_id, gr->gr_name, 63);
+  gr = getgrgid(yi);
+  if (gr) strncpy(y_id, gr->gr_name, 63);
   return strcmp(y_id, x_id);
 }
 

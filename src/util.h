@@ -127,6 +127,7 @@ void nctab(int, int, int, char *);
 
 /* crops a string into the specified length */
 char *cropstr(const char *, int);
+char *cropstr2(const char *, int);
 
 /* Converts the given size in bytes into a float (0 <= f < 1000) and a unit string */
 float formatsize(int64_t, char **);

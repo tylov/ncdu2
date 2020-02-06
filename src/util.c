@@ -61,14 +61,31 @@ char *cropstr(const char *from, int s) {
   return dat;
 }
 
+char *cropstr2(const char *from, int s) {
+  static char dat[4096];
+  if (s >= sizeof(dat))
+    s = sizeof(dat) - 1;
+  int o = strlen(from);
+  if (o <= s) {
+    strcpy(dat, from);
+  } else {
+    strncpy(dat, from, s - 2);
+    dat[s - 2] = '.';
+    dat[s - 1] = '.';
+    dat[s] = '\0';
+  }
+  return dat;
+}
+
+
 float formatsize(int64_t from, char **unit) {
   float r = from;
   int64_t b1 = si ? 1000 : 1024;
   int64_t b2 = b1*b1, b3 = b2*b1, b4 = b3*b1, b5 = b4*b1, b6 = b5*b1;
   static char* units[][6] = {{"KiB", "MiB", "GiB", "TiB", "PiB", "EiB"},
-                             {"KB", "MB", "GB", "TB", "PB", "EB"}};
+                             {"KB ", "MB ", "GB ", "TB ", "PB ", "EB "}};
   char** t = units[si];
-  if      (r < 1000)    { *unit = " B"; }
+  if      (r < 1000)    { *unit = " B "; }
   else if (r < 1000*b1) { *unit = t[0]; r /= b1; }
   else if (r < 1000*b2) { *unit = t[1]; r /= b2; }
   else if (r < 1000*b3) { *unit = t[2]; r /= b3; }

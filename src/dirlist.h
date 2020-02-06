@@ -63,6 +63,9 @@ void dirlist_set_sort(int column, int desc, int df);
 /* Set the hidden thingy */
 void dirlist_set_hidden(int hidden);
 
+/* First element in current directory */
+struct dir *dirlist_get_head(void);
+
 
 /* DO NOT WRITE TO ANY OF THE BELOW VARIABLES FROM OUTSIDE OF dirlist.c! */
 
