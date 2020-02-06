@@ -268,7 +268,8 @@ static void browse_draw_count(struct dir *n, int *x) {
 
 
 static void get_draw_mtime(struct dir *n, int *x, char* out) {
-  char mbuf[64], mdbuf[32], ubuf[32] = {0}, gbuf[32] = {0};
+  char mbuf[32] = "....-..-.. ..:..", mdbuf[32] =  "----------";
+  char ubuf[32] = "-no-user", gbuf[32] = "-no-group";
   struct dir_ext *e = NULL;
   struct passwd* pw;
   struct group* gr;
@@ -285,13 +286,10 @@ static void get_draw_mtime(struct dir *n, int *x, char* out) {
     strcpy(mdbuf, fmtmode(e->mode));
     pw = getpwuid(e->uid);
     if (pw) strcpy(ubuf, cropstr2(pw->pw_name, 9));
+    else sprintf(ubuf, "%d", e->uid);
     gr = getgrgid(e->gid);
     if (gr) strcpy(gbuf, cropstr2(gr->gr_name, 9));
-  } else {
-    sprintf(mbuf, "....-..-.. ..:..  ");
-    sprintf(mdbuf, "----------  ");
-    sprintf(ubuf, "__user     ");
-    sprintf(gbuf, "__group    ");
+    else sprintf(gbuf, "%d", e->gid);
   }
   sprintf(out, "%s  %s  %-9s %-9s   ", mbuf, mdbuf, ubuf, gbuf);
   *x += 50;

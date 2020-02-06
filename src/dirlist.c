@@ -73,8 +73,10 @@ static inline int cmp_user(struct dir *x, struct dir *y) {
   if (xi == yi) return 0;
   pw = getpwuid(xi);
   if (pw) strncpy(x_id, pw->pw_name, 63);
+  else sprintf(x_id, "%d", xi);
   pw = getpwuid(yi);
   if (pw) strncpy(y_id, pw->pw_name, 63);
+  else sprintf(y_id, "%d", yi);
   return strcmp(y_id, x_id);
 }
 
@@ -86,8 +88,10 @@ static inline int cmp_group(struct dir *x, struct dir *y) {
   if (xi == yi) return 0;
   gr = getgrgid(xi);
   if (gr) strncpy(x_id, gr->gr_name, 63);
+  else sprintf(x_id, "%d", xi);
   gr = getgrgid(yi);
   if (gr) strncpy(y_id, gr->gr_name, 63);
+  else sprintf(y_id, "%d", yi);
   return strcmp(y_id, x_id);
 }
 
@@ -96,13 +100,13 @@ static int dirlist_cmp(struct dir *x, struct dir *y) {
   int r = 0;
 
   #define CMP_MEMB(M) x->M < y->M ? -1 : (x->M > y->M ? 1 : 0)
-  #define CMP_EVAL(cmp) r = cmp; if (r != 0) return dirlist_sort_desc ? -r : r
+  #define CMP_EVAL(cmp, direction) r = cmp; if (r != 0) return direction ? -r : r
 
   if (dirlist_sort_id == 1) {
-    CMP_EVAL(cmp_user(x, y));
+    CMP_EVAL(cmp_user(x, y), 0);
   }
   else if (dirlist_sort_id == 2) {
-    CMP_EVAL(cmp_group(x, y));
+    CMP_EVAL(cmp_group(x, y), 0);
   }
 
   /* dirs are always before files when that option is set */
@@ -125,27 +129,27 @@ static int dirlist_cmp(struct dir *x, struct dir *y) {
 
   switch (dirlist_sort_col) {
     case DL_COL_MTIME:
-        CMP_EVAL(cmp_mtime(x, y));
-        CMP_EVAL(CMP_MEMB(size));
-        CMP_EVAL(strcmp(x->name, y->name));
+        CMP_EVAL(cmp_mtime(x, y), dirlist_sort_desc);
+        CMP_EVAL(CMP_MEMB(size), 0);
+        CMP_EVAL(strcmp(x->name, y->name), 0);
         break;
  	case DL_COL_NAME:
- 		CMP_EVAL(strcmp(x->name, y->name));
+ 		CMP_EVAL(strcmp(x->name, y->name), dirlist_sort_desc);
  		break;
  	case DL_COL_SIZE:
- 		CMP_EVAL(CMP_MEMB(size));
- 		CMP_EVAL(CMP_MEMB(items));
- 		CMP_EVAL(strcmp(x->name, y->name));
+ 		CMP_EVAL(CMP_MEMB(size), dirlist_sort_desc);
+ 		CMP_EVAL(CMP_MEMB(items), 0);
+ 		CMP_EVAL(strcmp(x->name, y->name), 0);
  		break;
  	case DL_COL_ASIZE:
- 		CMP_EVAL(CMP_MEMB(asize));
- 		CMP_EVAL(CMP_MEMB(items));
- 		CMP_EVAL(strcmp(x->name, y->name));	
+ 		CMP_EVAL(CMP_MEMB(asize), dirlist_sort_desc);
+ 		CMP_EVAL(CMP_MEMB(items), 0);
+ 		CMP_EVAL(strcmp(x->name, y->name), 0);	
  		break;
   	case DL_COL_ITEMS:
- 		CMP_EVAL(CMP_MEMB(items));
- 		CMP_EVAL(CMP_MEMB(size));
- 		CMP_EVAL(strcmp(x->name, y->name));
+ 		CMP_EVAL(CMP_MEMB(items), dirlist_sort_desc);
+ 		CMP_EVAL(CMP_MEMB(size), 0);
+ 		CMP_EVAL(strcmp(x->name, y->name), 0);
  		break;
   }
 
