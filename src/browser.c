@@ -65,8 +65,8 @@ static void browse_draw_info(struct dir *dr) {
       ncaddstr(4, 33, "GID:");
       ncaddstr(5, 3, "Last modified:");
     }
-    ncaddstr(6, 3, "   Disk usage:");
-    ncaddstr(7, 3, "Apparent size:");
+    ncaddstr(6, 3, "   Files size:");
+    ncaddstr(7, 3, "   Disk usage:");
     attroff(A_BOLD);
 
     ncaddstr(2,  9, cropstr(dr->name, 49));
@@ -83,15 +83,15 @@ static void browse_draw_info(struct dir *dr) {
     }
 
     ncmove(6, 18);
-    printsize(UIC_DEFAULT, dr->size);
-    addstrc(UIC_DEFAULT, " (");
-    addstrc(UIC_NUM, fullsize(dr->size));
-    addstrc(UIC_DEFAULT, " B)");
-
-    ncmove(7, 18);
     printsize(UIC_DEFAULT, dr->asize);
     addstrc(UIC_DEFAULT, " (");
     addstrc(UIC_NUM, fullsize(dr->asize));
+    addstrc(UIC_DEFAULT, " B)");
+
+    ncmove(7, 18);
+    printsize(UIC_DEFAULT, dr->size);
+    addstrc(UIC_DEFAULT, " (");
+    addstrc(UIC_NUM, fullsize(dr->size));
     addstrc(UIC_DEFAULT, " B)");
     break;
 
@@ -364,8 +364,8 @@ void get_sort_flags(char* out) {
   sprintf(out, "%c%c%c%c%c", 
           dirlist_sort_id == 1 ? 'U' : (dirlist_sort_id == 2 ? 'G' : '-'),
           dirlist_sort_df ? 'F' : '-', 
-          dirlist_sort_col == DL_COL_SIZE ? 'L' :
           dirlist_sort_col == DL_COL_ASIZE ? 'S' :
+          dirlist_sort_col == DL_COL_SIZE ? 'K' :
           dirlist_sort_col == DL_COL_ITEMS ? 'C' :
           dirlist_sort_col == DL_COL_NAME ? 'N' : 'M',
           dirlist_sort_desc ? '-' : '^',
@@ -411,7 +411,7 @@ void browse_draw() {
   uic_set(UIC_HD);
   mvhline(winrows-1, 0, ' ', wincols);
   if(t) {
-    mvaddstr(winrows-1, 0, "Total files size: ");
+    mvaddstr(winrows-1, 1, "Total files size: ");
     printsize(UIC_HD, t->parent->asize);
     addstrc(UIC_HD, "  Total disk usage: ");
     uic_set(UIC_NUM_HD);
@@ -591,7 +591,7 @@ int browse_key(int ch) {
       dirlist_set_sort(DL_COL_NAME, dirlist_sort_col == DL_COL_NAME ? !dirlist_sort_desc : 0, DL_NOCHANGE);
       info_show = 0;
       break;
-    case 'l': // size
+    case 'k': // dis[k] usage
       dirlist_set_sort(DL_COL_SIZE, dirlist_sort_col == DL_COL_SIZE ? !dirlist_sort_desc : 1, DL_NOCHANGE);
       info_show = 0;
       break;
