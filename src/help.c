@@ -46,7 +46,7 @@ char *keys[KEYS*2] = {
             "f", "Toggle folders first",
             "u", "Toggle sort user first (ext info)",
             "g", "Toggle sort group first (ext info)",
-       "Delete", "Delete selected file or directory",
+     "Delete/d", "Delete selected file or directory",
             "1", "Toggle 1024/1000 base size units",
             "2", "Toggle percentage and/or graph",
             "3", "Toggle display of child item counts",

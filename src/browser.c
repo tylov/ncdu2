@@ -222,7 +222,8 @@ static void get_draw_count(struct dir *n, int *x, char* out) {
     *out = '\0';
     return;
   }
-  *x += 7;
+  
+  *x += 8;
   if (n->items == 0) {
     sprintf(out, "          ");
   } else if (n->items < 1000*1000) {
@@ -239,31 +240,15 @@ static void get_draw_count(struct dir *n, int *x, char* out) {
 
 
 static void browse_draw_count(struct dir *n, int *x) {
-  enum ui_coltype c = n->flags & FF_BSEL ? UIC_SEL : UIC_DEFAULT;
-  enum ui_coltype cn = c == UIC_SEL ? UIC_NUM_SEL : UIC_NUM;
-
+  enum ui_coltype cn = n->flags & FF_BSEL ? UIC_NUM_SEL : UIC_NUM;
+  char buf[32];
+  
   if(!show_items)
     return;
-  *x += 8;
 
-  if(!n->items)
-    return;
-  else if(n->items < 1000*1000) {
-    uic_set(cn);
-    printw("%6s", fullsize(n->items));
-  } else if(n->items < 100*1000*1000) {
-      uic_set(cn);
-      printw("%5.2f", n->items / 1e6);
-      addstrc(c, "M");
-  } else if(n->items < 1000*1000*1000) {
-    uic_set(cn);
-    printw("%5.1f", n->items / 1e6);
-    addstrc(c, "M");
-  } else {
-    addstrc(c, "  > ");
-    addstrc(cn, "1");
-    addchc(c, 'B');
-  }
+  get_draw_count(n, x, buf);
+  uic_set(cn);
+  printw(buf);
 }
 
 
@@ -318,7 +303,7 @@ static void browse_draw_item(struct dir *n, int row) {
 
   if(n != dirlist_parent) {
     printsize(c, show_as ? n->asize : n->size);
-    if (show_as) printw("'");
+    if (!show_as) printw("'");
   }
   x += 10;
   move(row, x);
@@ -340,7 +325,6 @@ static void browse_draw_item(struct dir *n, int row) {
   addstrc(c, cropstr(n->name, wincols-x-1));
 }
 
-
 static void get_draw_item(struct dir *n, char *line) {
   int x = 0;
   int show_as = dirlist_sort_col == DL_COL_ASIZE;
@@ -353,9 +337,9 @@ static void get_draw_item(struct dir *n, char *line) {
 
   // size
   if(n != dirlist_parent) {
-    char* fmt;
-    float value = formatsize(show_as ? n->asize : n->size, &fmt);
-    sprintf(&line[x], "%5.1f %s%c  ", value, fmt, show_as ? '\'' : ' ');
+    char* unit;
+    float value = formatsize(show_as ? n->asize : n->size, &unit);
+    sprintf(&line[x], "%5.1f %s%c  ", value, unit, show_as ? ' ' : '\'');
   } else {
     sprintf(&line[x], "              ");
   }
@@ -376,10 +360,24 @@ static void get_draw_item(struct dir *n, char *line) {
 }
 
 
+void get_sort_flags(char* out) {
+  sprintf(out, "%c%c%c%c%c", 
+          dirlist_sort_id == 1 ? 'U' : (dirlist_sort_id == 2 ? 'G' : '-'),
+          dirlist_sort_df ? 'F' : '-', 
+          dirlist_sort_col == DL_COL_SIZE ? 'L' :
+          dirlist_sort_col == DL_COL_ASIZE ? 'S' :
+          dirlist_sort_col == DL_COL_ITEMS ? 'C' :
+          dirlist_sort_col == DL_COL_NAME ? 'N' : 'M',
+          dirlist_sort_desc ? '-' : '^',
+          dirlist_hidden ? 'X' : '-');
+}
+
+
 void browse_draw() {
   struct dir *t;
   char *tmp;
   int selected = 0, i;
+  char buf[32];
 
   erase();
   t = dirlist_get(0);
@@ -413,25 +411,18 @@ void browse_draw() {
   uic_set(UIC_HD);
   mvhline(winrows-1, 0, ' ', wincols);
   if(t) {
-    mvaddstr(winrows-1, 0, " Total disk usage: ");
-    printsize(UIC_HD, t->parent->size);
-    addstrc(UIC_HD, "  Apparent size: ");
-    uic_set(UIC_NUM_HD);
+    mvaddstr(winrows-1, 0, "Total files size: ");
     printsize(UIC_HD, t->parent->asize);
+    addstrc(UIC_HD, "  Total disk usage: ");
+    uic_set(UIC_NUM_HD);
+    printsize(UIC_HD, t->parent->size);
     addstrc(UIC_HD, "  Items: ");
     uic_set(UIC_NUM_HD);
     printw("%d", t->parent->items);
     addstrc(UIC_HD, "  Sort flags: ");
     uic_set(UIC_NUM_HD);
-    printw("%c%c%c%c%c", 
-           dirlist_sort_id == 1 ? 'U' : (dirlist_sort_id == 2 ? 'G' : '-'),
-           dirlist_sort_df ? 'F' : '-', 
-           dirlist_sort_col == DL_COL_SIZE ? 'S' :
-           dirlist_sort_col == DL_COL_ASIZE ? 'A' :
-           dirlist_sort_col == DL_COL_ITEMS ? 'C' :
-           dirlist_sort_col == DL_COL_NAME ? 'N' : 'M',
-           dirlist_sort_desc ? ' ' : '^',
-           dirlist_hidden ? 'x' : ' ');
+    get_sort_flags(buf);
+    printw(buf);
   } else
     mvaddstr(winrows-1, 0, " No items to display.");
   uic_set(UIC_DEFAULT);
@@ -465,6 +456,46 @@ void browse_draw() {
 
   /* move cursor to selected row for accessibility */
   move(selected+2, 0);
+}
+
+
+void write_report(void)
+{
+    int i;
+    char line[4096];
+    char timebuf[32], sflagsbuf[32], fname[128];
+    FILE* fp;
+    time_t tm = time(NULL);
+    struct dir *t = dirlist_get_head();
+    float value;
+    char* unit;
+
+    /* get start position */
+    strftime(timebuf, sizeof(timebuf), "%Y%m%d", localtime(&tm));
+    get_sort_flags(sflagsbuf);
+    //sprintf(fname, ".ncdu2_report_%s~%s.txt", timebuf, sflagsbuf);
+    sprintf(fname, "ncdu2_report.txt");
+    fp = fopen(fname, "w");
+
+    if (t->parent) {
+      fprintf(fp, "NCDU2 disk usage report\n");
+      fprintf(fp, "-----------------------\n");
+      fprintf(fp, "       Directory : %s\n", getpath(t->parent));
+      fprintf(fp, "            Date : %s\n", timebuf);
+      value = formatsize(t->parent->asize, &unit);
+      fprintf(fp, "Total files size : %6.2f %s\n", value, unit);
+      value = formatsize(t->parent->size, &unit);
+      fprintf(fp, "Total disk usage : %6.2f %s\n", value, unit);
+      fprintf(fp, "     Items count : %d\n", t->parent->items);
+      fprintf(fp, "      Sort flags : %s\n\n", sflagsbuf);
+    }
+        
+    /* print the list to a file */
+    for(i = 0; t != NULL; t = dirlist_next(t), ++i) {
+      get_draw_item(t, line);
+      fprintf(fp, "%s\n", line);
+    }
+    fclose(fp);
 }
 
 
@@ -560,16 +591,14 @@ int browse_key(int ch) {
       dirlist_set_sort(DL_COL_NAME, dirlist_sort_col == DL_COL_NAME ? !dirlist_sort_desc : 0, DL_NOCHANGE);
       info_show = 0;
       break;
-    case 's': // size
+    case 'l': // size
       dirlist_set_sort(DL_COL_SIZE, dirlist_sort_col == DL_COL_SIZE ? !dirlist_sort_desc : 1, DL_NOCHANGE);
       info_show = 0;
       break;
-/*      
-    case 'a': // asize
+    case 's': // asize
       dirlist_set_sort(DL_COL_ASIZE, dirlist_sort_col == DL_COL_ASIZE ? !dirlist_sort_desc : 1, DL_NOCHANGE);
       info_show = 0;
       break;
-*/
     case 'c': // count
       dirlist_set_sort(DL_COL_ITEMS, dirlist_sort_col == DL_COL_ITEMS ? !dirlist_sort_desc : 1, DL_NOCHANGE);
       info_show = 0;
@@ -669,6 +698,7 @@ int browse_key(int ch) {
       info_show = 0;
       break;
     case KEY_DC:
+    case 'd':
       if(read_only >= 1 || dir_import_active) {
         message = read_only >= 1
           ? "File deletion disabled in read-only mode."
@@ -693,20 +723,8 @@ int browse_key(int ch) {
       shell_init();
       break;
 
-    case 'p': {
-        int i;
-        char line[4096];
-        FILE* fp = fopen("print.txt", "w");
-        /* get start position */
-        struct dir *t = dirlist_get_head();
-            
-        /* print the list to a file */
-        for(i = 0; t != NULL; t = dirlist_next(t), ++i) {
-          get_draw_item(t, line);
-          fprintf(fp, "%s\n", line);
-        }
-        fclose(fp);
-      }
+    case 'p':
+      write_report();
       break;
     }
 
