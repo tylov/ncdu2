@@ -65,8 +65,8 @@ static void browse_draw_info(struct dir *dr) {
       ncaddstr(4, 33, "GID:");
       ncaddstr(5, 3, "Last modified:");
     }
-    ncaddstr(6, 3, "   Files size:");
-    ncaddstr(7, 3, "   Disk usage:");
+    ncaddstr(6, 3, "   Disk usage:");
+    ncaddstr(7, 3, "Apparent size:");
     attroff(A_BOLD);
 
     ncaddstr(2,  9, cropstr(dr->name, 49));
@@ -83,15 +83,15 @@ static void browse_draw_info(struct dir *dr) {
     }
 
     ncmove(6, 18);
-    printsize(UIC_DEFAULT, dr->asize);
-    addstrc(UIC_DEFAULT, " (");
-    addstrc(UIC_NUM, fullsize(dr->asize));
-    addstrc(UIC_DEFAULT, " B)");
-
-    ncmove(7, 18);
     printsize(UIC_DEFAULT, dr->size);
     addstrc(UIC_DEFAULT, " (");
     addstrc(UIC_NUM, fullsize(dr->size));
+    addstrc(UIC_DEFAULT, " B)");
+
+    ncmove(7, 18);
+    printsize(UIC_DEFAULT, dr->asize);
+    addstrc(UIC_DEFAULT, " (");
+    addstrc(UIC_NUM, fullsize(dr->asize));
     addstrc(UIC_DEFAULT, " B)");
     break;
 
@@ -303,7 +303,7 @@ static void browse_draw_item(struct dir *n, int row) {
 
   if(n != dirlist_parent) {
     printsize(c, show_as ? n->asize : n->size);
-    if (!show_as) printw("'");
+    if (show_as) printw("'");
   }
   x += 10;
   move(row, x);
@@ -339,7 +339,7 @@ static void get_draw_item(struct dir *n, char *line) {
   if(n != dirlist_parent) {
     char* unit;
     float value = formatsize(show_as ? n->asize : n->size, &unit);
-    sprintf(&line[x], "%5.1f %s%c  ", value, unit, show_as ? ' ' : '\'');
+    sprintf(&line[x], "%5.1f %s%c  ", value, unit, show_as ? '\'' : ' ');
   } else {
     sprintf(&line[x], "              ");
   }
@@ -411,11 +411,11 @@ void browse_draw() {
   uic_set(UIC_HD);
   mvhline(winrows-1, 0, ' ', wincols);
   if(t) {
-    mvaddstr(winrows-1, 1, "Total files size: ");
-    printsize(UIC_HD, t->parent->asize);
-    addstrc(UIC_HD, "  Total disk usage: ");
-    uic_set(UIC_NUM_HD);
+    mvaddstr(winrows-1, 1, "Total disk usage: ");
     printsize(UIC_HD, t->parent->size);
+    addstrc(UIC_HD, "     Apparent size: ");
+    uic_set(UIC_NUM_HD);
+    printsize(UIC_HD, t->parent->asize);
     addstrc(UIC_HD, "  Items: ");
     uic_set(UIC_NUM_HD);
     printw("%d", t->parent->items);
@@ -482,10 +482,10 @@ void write_report(void)
       fprintf(fp, "-----------------------\n");
       fprintf(fp, "       Directory : %s\n", getpath(t->parent));
       fprintf(fp, "            Date : %s\n", timebuf);
-      value = formatsize(t->parent->asize, &unit);
-      fprintf(fp, "Total files size : %6.2f %s\n", value, unit);
       value = formatsize(t->parent->size, &unit);
       fprintf(fp, "Total disk usage : %6.2f %s\n", value, unit);
+      value = formatsize(t->parent->asize, &unit);
+      fprintf(fp, "   Apparent size : %6.2f %s\n", value, unit);
       fprintf(fp, "     Items count : %d\n", t->parent->items);
       fprintf(fp, "      Sort flags : %s\n\n", sflagsbuf);
     }
@@ -591,11 +591,11 @@ int browse_key(int ch) {
       dirlist_set_sort(DL_COL_NAME, dirlist_sort_col == DL_COL_NAME ? !dirlist_sort_desc : 0, DL_NOCHANGE);
       info_show = 0;
       break;
-    case 'k': // dis[k] usage
+    case 's': // dis[k] usage
       dirlist_set_sort(DL_COL_SIZE, dirlist_sort_col == DL_COL_SIZE ? !dirlist_sort_desc : 1, DL_NOCHANGE);
       info_show = 0;
       break;
-    case 's': // asize
+    case 'a': // asize
       dirlist_set_sort(DL_COL_ASIZE, dirlist_sort_col == DL_COL_ASIZE ? !dirlist_sort_desc : 1, DL_NOCHANGE);
       info_show = 0;
       break;

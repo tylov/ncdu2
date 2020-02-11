@@ -32,7 +32,7 @@
 int page, start;
 
 
-#define KEYS 21
+#define KEYS 22
 char *keys[KEYS*2] = {
 /*|----key----|  |----------------description----------------|*/
            "Up", "Move cursor up",
@@ -40,19 +40,20 @@ char *keys[KEYS*2] = {
   "Enter/Right", "Open selected directory",
  "Backspc/Left", "Open parent directory",
             "n", "Sort by name (asc./desc.)",
-            "s", "Sort by size (asc./desc.)",
+            "s", "Sort by size on disk (asc./desc.)",
+            "a", "Sort by apparent size (asc./desc.)",
             "c", "Sort by item count (asc./desc.)",
             "m", "Sort by mod. time (ext info)",
-            "f", "Toggle folders first",
             "u", "Toggle sort user first (ext info)",
             "g", "Toggle sort group first (ext info)",
-     "Delete/d", "Delete selected file or directory",
+            "f", "Toggle folders first",
             "1", "Toggle 1024/1000 base size units",
             "2", "Toggle percentage and/or graph",
             "3", "Toggle display of child item counts",
             "4", "Toggle display of extended info",
             "x", "Toggle display of excluded/hidden files",
             "i", "Show information about selected item",
+     "Delete/d", "Delete selected file or directory",
             "r", "Recalculate the current directory",
             "b", "Spawn shell in current directory",
             "q", "Quit ncdu2"
