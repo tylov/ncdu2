@@ -46,7 +46,7 @@ int dir_scan_smfs; /* Stay on the same filesystem */
 static uint64_t curdev;   /* current device we're scanning on */
 
 /* scratch space */
-static struct dir    *buf_dir;
+static struct dir    *buf_dir = NULL;
 static struct dir_ext buf_ext[1];
 
 
@@ -74,10 +74,10 @@ static void stat_to_dir(struct stat *fs) {
     buf_dir->asize = fs->st_size;
   }
 
-  buf_ext->mode  = fs->st_mode;
-  buf_ext->mtime = fs->st_mtime;
-  buf_ext->uid   = (int)fs->st_uid;
-  buf_ext->gid   = (int)fs->st_gid;
+  buf_dir->mode = fs->st_mode;
+  buf_dir->mtime = fs->st_mtime;
+  buf_dir->uid = fs->st_uid;
+  buf_dir->gid = fs->st_gid;
 }
 
 

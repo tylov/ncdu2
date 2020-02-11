@@ -75,9 +75,6 @@ static void output_int(uint64_t n) {
 
 
 static void output_info(struct dir *d, const char *name, struct dir_ext *e) {
-  if(!extended_info || !(d->flags & FF_EXT))
-    e = NULL;
-
   fputs("{\"name\":\"", stream);
   output_string(name);
   fputc('"', stream);
@@ -99,15 +96,15 @@ static void output_info(struct dir *d, const char *name, struct dir_ext *e) {
   fputs(",\"ino\":", stream);
   output_int(d->ino);
 
-  if(e) {
+  if(extended_info && (d->flags & FF_EXT)) {
     fputs(",\"uid\":", stream);
-    output_int(e->uid);
+    output_int(d->uid);
     fputs(",\"gid\":", stream);
-    output_int(e->gid);
+    output_int(d->gid);
     fputs(",\"mode\":", stream);
-    output_int(e->mode);
+    output_int(d->mode);
     fputs(",\"mtime\":", stream);
-    output_int(e->mtime);
+    output_int(d->mtime);
   }
 
   /* TODO: Including the actual number of links would be nicer. */

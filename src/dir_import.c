@@ -451,19 +451,19 @@ static int iteminfo() {
     } else if(strcmp(ctx->val, "uid") == 0) {        /* uid */
       C(rint64(&iv, INT32_MAX));
       ctx->buf_dir->flags |= FF_EXT;
-      ctx->buf_ext->uid = iv;
+      ctx->buf_dir->uid = iv;
     } else if(strcmp(ctx->val, "gid") == 0) {        /* gid */
       C(rint64(&iv, INT32_MAX));
       ctx->buf_dir->flags |= FF_EXT;
-      ctx->buf_ext->gid = iv;
+      ctx->buf_dir->gid = iv;
     } else if(strcmp(ctx->val, "mode") == 0) {       /* mode */
       C(rint64(&iv, UINT16_MAX));
       ctx->buf_dir->flags |= FF_EXT;
-      ctx->buf_ext->mode = iv;
+      ctx->buf_dir->mode = iv;
     } else if(strcmp(ctx->val, "mtime") == 0) {      /* mtime */
       C(rint64(&iv, UINT64_MAX));
       ctx->buf_dir->flags |= FF_EXT;
-      ctx->buf_ext->mtime = iv;
+      ctx->buf_dir->mtime = iv;
     } else if(strcmp(ctx->val, "hlnkc") == 0) {      /* hlnkc */
       if(*ctx->buf == 't') {
         C(rlit("true", 4));

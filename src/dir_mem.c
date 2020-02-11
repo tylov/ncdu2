@@ -126,12 +126,13 @@ static int item(struct dir *dir, const char *name, struct dir_ext *ext) {
   item = xmalloc(dir_memsize(name));
   memcpy(item, dir, offsetof(struct dir, name));
   strcpy(item->name, name);
+  /* TYGE
   if(dir->flags & FF_EXT) {
     item->mtime = ext->mtime;
     item->uid = ext->uid;
     item->gid = ext->gid;
     item->mode = ext->mode;
-  }
+  }*/
 
   item_add(item);
 
