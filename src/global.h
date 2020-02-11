@@ -63,11 +63,16 @@
 
 /* structure representing a file or directory */
 struct dir {
-  int64_t size, asize;
-  uint64_t ino, dev;
+  off_t size, asize;
+  ino_t ino; dev_t dev;
   struct dir *parent, *next, *prev, *sub, *hlnk;
   int items;
   unsigned short flags;
+  struct {
+    time_t mtime;
+    uid_t uid; gid_t gid;
+    unsigned short mode;
+  };
   char name[];
 };
 
@@ -85,8 +90,8 @@ struct dir {
  * memory region as struct dir, placed after the name field. See util.h for
  * macros to help manage this. */
 struct dir_ext {
-  uint64_t mtime;
-  int uid, gid;
+  time_t mtime;
+  uid_t uid; gid_t gid;
   unsigned short mode;
 };
 

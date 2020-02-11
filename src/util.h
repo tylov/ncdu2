@@ -76,16 +76,12 @@ extern int si;
 
 /* Macros/functions for managing struct dir and struct dir_ext */
 
-#define dir_memsize(n)     (offsetof(struct dir, name)+1+strlen(n))
-#define dir_ext_offset(n)  ((dir_memsize(n) + 7) & ~7)
-#define dir_ext_memsize(n) (dir_ext_offset(n) + sizeof(struct dir_ext))
+#define dir_memsize(n)     (offsetof(struct dir, name) + strlen(n) + 1)
+#define dir_ext_memsize(n) dir_memsize(n)
 
 static inline struct dir_ext *dir_ext_ptr(struct dir *d) {
-  return d->flags & FF_EXT
-    ? (struct dir_ext *) ( ((char *)d) + dir_ext_offset(d->name) )
-    : NULL;
+  return (struct dir_ext *) &d->mtime;
 }
-
 
 /* Instead of using several ncurses windows, we only draw to stdscr.
  * the functions nccreate, ncprint and the macros ncaddstr and ncaddch
