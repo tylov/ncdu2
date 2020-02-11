@@ -47,11 +47,10 @@ static uint64_t curdev;   /* current device we're scanning on */
 
 /* scratch space */
 static struct dir    *buf_dir = NULL;
-static struct dir_ext buf_ext[1];
 
 
 
-/* Populates the buf_dir and buf_ext with information from the stat struct.
+/* Populates the buf_dir with information from the stat struct.
  * Sets everything necessary for output_dir.item() except FF_ERR and FF_EXL. */
 static void stat_to_dir(struct stat *fs) {
   buf_dir->flags |= FF_EXT; /* We always read extended data because it doesn't have an additional cost */
@@ -136,7 +135,7 @@ static int dir_scan_recurse(const char *name) {
   if(chdir(name)) {
     dir_setlasterr(dir_curpath);
     buf_dir->flags |= FF_ERR;
-    if(dir_output.item(buf_dir, name, buf_ext) || dir_output.item(NULL, 0, NULL)) {
+    if(dir_output.item(buf_dir, name) || dir_output.item(NULL, 0)) {
       dir_seterr("Output error: %s", strerror(errno));
       return 1;
     }
@@ -146,7 +145,7 @@ static int dir_scan_recurse(const char *name) {
   if((dir = dir_read(&fail)) == NULL) {
     dir_setlasterr(dir_curpath);
     buf_dir->flags |= FF_ERR;
-    if(dir_output.item(buf_dir, name, buf_ext) || dir_output.item(NULL, 0, NULL)) {
+    if(dir_output.item(buf_dir, name) || dir_output.item(NULL, 0)) {
       dir_seterr("Output error: %s", strerror(errno));
       return 1;
     }
@@ -161,12 +160,12 @@ static int dir_scan_recurse(const char *name) {
   if(fail)
     buf_dir->flags |= FF_ERR;
 
-  if(dir_output.item(buf_dir, name, buf_ext)) {
+  if(dir_output.item(buf_dir, name)) {
     dir_seterr("Output error: %s", strerror(errno));
     return 1;
   }
   fail = dir_walk(dir);
-  if(dir_output.item(NULL, 0, NULL)) {
+  if(dir_output.item(NULL, 0)) {
     dir_seterr("Output error: %s", strerror(errno));
     return 1;
   }
@@ -221,11 +220,11 @@ static int dir_scan_item(const char *name) {
   if(buf_dir->flags & FF_DIR && !(buf_dir->flags & (FF_ERR|FF_EXL|FF_OTHFS)))
     fail = dir_scan_recurse(name);
   else if(buf_dir->flags & FF_DIR) {
-    if(dir_output.item(buf_dir, name, buf_ext) || dir_output.item(NULL, 0, NULL)) {
+    if(dir_output.item(buf_dir, name) || dir_output.item(NULL, 0)) {
       dir_seterr("Output error: %s", strerror(errno));
       fail = 1;
     }
-  } else if(dir_output.item(buf_dir, name, buf_ext)) {
+  } else if(dir_output.item(buf_dir, name)) {
     dir_seterr("Output error: %s", strerror(errno));
     fail = 1;
   }
@@ -245,7 +244,6 @@ static int dir_walk(char *dir) {
   for(cur=dir; !fail&&cur&&*cur; cur+=strlen(cur)+1) {
     dir_curpath_enter(cur);
     memset(buf_dir, 0, offsetof(struct dir, name));
-    memset(buf_ext, 0, sizeof(struct dir_ext));
     fail = dir_scan_item(cur);
     dir_curpath_leave();
   }
@@ -262,7 +260,6 @@ static int process() {
   struct stat fs;
 
   memset(buf_dir, 0, offsetof(struct dir, name));
-  memset(buf_ext, 0, sizeof(struct dir_ext));
 
   if((path = path_real(dir_curpath)) == NULL)
     dir_seterr("Error obtaining full path: %s", strerror(errno));
@@ -289,13 +286,13 @@ static int process() {
       buf_dir->flags |= FF_ERR;
     stat_to_dir(&fs);
 
-    if(dir_output.item(buf_dir, dir_curpath, buf_ext)) {
+    if(dir_output.item(buf_dir, dir_curpath)) {
       dir_seterr("Output error: %s", strerror(errno));
       fail = 1;
     }
     if(!fail)
       fail = dir_walk(dir);
-    if(!fail && dir_output.item(NULL, 0, NULL)) {
+    if(!fail && dir_output.item(NULL, 0)) {
       dir_seterr("Output error: %s", strerror(errno));
       fail = 1;
     }

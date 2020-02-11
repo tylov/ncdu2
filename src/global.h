@@ -63,16 +63,17 @@
 
 /* structure representing a file or directory */
 struct dir {
-  off_t size, asize;
-  ino_t ino; dev_t dev;
   struct dir *parent, *next, *prev, *sub, *hlnk;
+  ino_t ino;
+  dev_t dev;
+  off_t size;
+  off_t asize;
   int items;
   unsigned short flags;
-  struct {
-    time_t mtime;
-    uid_t uid; gid_t gid;
-    unsigned short mode;
-  };
+  unsigned short mode;
+  time_t mtime;
+  uid_t uid;
+  gid_t gid;
   char name[];
 };
 
@@ -85,16 +86,6 @@ struct dir {
  * we encounter them, will just get typecasted into a positive value. No
  * information is lost in this conversion, and the semantics remain the same.
  */
-
-/* Extended information for a struct dir. This struct is stored in the same
- * memory region as struct dir, placed after the name field. See util.h for
- * macros to help manage this. */
-struct dir_ext {
-  time_t mtime;
-  uid_t uid; gid_t gid;
-  unsigned short mode;
-};
-
 
 /* program state */
 extern int pstate;

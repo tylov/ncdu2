@@ -71,8 +71,6 @@ struct ctx {
 
   /* scratch space */
   struct dir    *buf_dir;
-  struct dir_ext buf_ext[1];
-
   char buf_name[MAX_VAL];
   char val[MAX_VAL];
   char readbuf[READ_BUF_SIZE];
@@ -420,8 +418,8 @@ static int itemdir(uint64_t dev) {
 }
 
 
-/* Reads a JSON object representing a struct dir/dir_ext item. Writes to
- * ctx->buf_dir, ctx->buf_ext and ctx->buf_name. */
+/* Reads a JSON object representing a struct dir item. Writes to
+ * ctx->buf_dir, and ctx->buf_name. */
 static int iteminfo() {
   uint64_t iv;
 
@@ -522,7 +520,6 @@ static int item(uint64_t dev) {
   }
 
   memset(ctx->buf_dir, 0, offsetof(struct dir, name));
-  memset(ctx->buf_ext, 0, sizeof(struct dir_ext));
   *ctx->buf_name = 0;
   ctx->buf_dir->flags |= isdir ? FF_DIR : FF_FILE;
   ctx->buf_dir->dev = dev;
@@ -536,16 +533,16 @@ static int item(uint64_t dev) {
     dir_curpath_enter(ctx->buf_name);
 
   if(isdir) {
-    if(dir_output.item(ctx->buf_dir, ctx->buf_name, ctx->buf_ext)) {
+    if(dir_output.item(ctx->buf_dir, ctx->buf_name)) {
       dir_seterr("Output error: %s", strerror(errno));
       return 1;
     }
     C(itemdir(dev));
-    if(dir_output.item(NULL, 0, NULL)) {
+    if(dir_output.item(NULL, 0)) {
       dir_seterr("Output error: %s", strerror(errno));
       return 1;
     }
-  } else if(dir_output.item(ctx->buf_dir, ctx->buf_name, ctx->buf_ext)) {
+  } else if(dir_output.item(ctx->buf_dir, ctx->buf_name)) {
     dir_seterr("Output error: %s", strerror(errno));
     return 1;
   }
