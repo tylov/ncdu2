@@ -428,14 +428,12 @@ struct dir *getroot(struct dir *d) {
 
 
 void addparentstats(struct dir *d, int64_t size, int64_t asize, uint64_t mtime, int items) {
-  struct dir_ext *e;
   while(d) {
     d->size = adds64(d->size, size);
     d->asize = adds64(d->asize, asize);
     d->items += items;
     if (d->flags & FF_EXT) {
-      e = dir_ext_ptr(d);
-      e->mtime = (e->mtime > mtime) ? e->mtime : mtime;
+      d->mtime = (d->mtime > mtime) ? d->mtime : mtime;
     }
     d = d->parent;
   }

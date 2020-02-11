@@ -106,7 +106,7 @@ extern long update_delay;
 extern int cachedir_tags;
 /* flag if we should ask for confirmation when quitting */
 extern int confirm_quit;
-/* flag whether we want to enable use of struct dir_ext */
+/* flag whether we want to enable use of struct extension */
 extern int extended_info;
 /* flag whether we want to follow symlinks */
 extern int follow_symlinks;

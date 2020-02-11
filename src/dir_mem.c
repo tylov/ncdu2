@@ -123,11 +123,15 @@ static int item(struct dir *dir, const char *name, struct dir_ext *ext) {
 
   if(!extended_info)
     dir->flags &= ~FF_EXT;
-  item = xmalloc(dir->flags & FF_EXT ? dir_ext_memsize(name) : dir_memsize(name));
+  item = xmalloc(dir_memsize(name));
   memcpy(item, dir, offsetof(struct dir, name));
   strcpy(item->name, name);
-  if(dir->flags & FF_EXT)
-    memcpy(dir_ext_ptr(item), ext, sizeof(struct dir_ext));
+  if(dir->flags & FF_EXT) {
+    item->mtime = ext->mtime;
+    item->uid = ext->uid;
+    item->gid = ext->gid;
+    item->mode = ext->mode;
+  }
 
   item_add(item);
 
@@ -146,10 +150,8 @@ static int item(struct dir *dir, const char *name, struct dir_ext *ext) {
   if(item->flags & FF_HLNKC) {
     addparentstats(item->parent, 0, 0, 0, 1);
     hlink_check(item);
-  } else if(item->flags & FF_EXT) {
-    addparentstats(item->parent, item->size, item->asize, dir_ext_ptr(item)->mtime, 1);
   } else {
-    addparentstats(item->parent, item->size, item->asize, 0, 1);
+    addparentstats(item->parent, item->size, item->asize, item->mtime, 1);
   }
 
   /* propagate ERR and SERR back up to the root */

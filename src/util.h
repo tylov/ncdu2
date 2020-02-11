@@ -74,14 +74,9 @@ extern int subwinr, subwinc;
 extern int si;
 
 
-/* Macros/functions for managing struct dir and struct dir_ext */
+/* Macros/functions for managing struct dir allocation */
 
 #define dir_memsize(n)     (offsetof(struct dir, name) + strlen(n) + 1)
-#define dir_ext_memsize(n) dir_memsize(n)
-
-static inline struct dir_ext *dir_ext_ptr(struct dir *d) {
-  return (struct dir_ext *) &d->mtime;
-}
 
 /* Instead of using several ncurses windows, we only draw to stdscr.
  * the functions nccreate, ncprint and the macros ncaddstr and ncaddch

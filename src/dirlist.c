@@ -58,17 +58,17 @@ struct dir *dirlist_get_head(void) {
 static inline int cmp_mtime(struct dir *x, struct dir*y) {
   int64_t x_mtime = 0, y_mtime = 0;
   if (x->flags & FF_EXT)
-    x_mtime = dir_ext_ptr(x)->mtime;
+    x_mtime = x->mtime;
   if (y->flags & FF_EXT)
-    y_mtime = dir_ext_ptr(y)->mtime;
+    y_mtime = y->mtime;
   return (x_mtime > y_mtime ? 1 : (x_mtime == y_mtime ? 0 : -1));
 }
 
 
 static inline int cmp_user(struct dir *x, struct dir *y) {
   char x_id[64] = {0}, y_id[64] = {0};
-  int xi = x->flags & FF_EXT ? dir_ext_ptr(x)->uid : 0;
-  int yi = y->flags & FF_EXT ? dir_ext_ptr(y)->uid : 0;
+  int xi = x->flags & FF_EXT ? x->uid : 0;
+  int yi = y->flags & FF_EXT ? y->uid : 0;
   struct passwd* pw;
   if (xi == yi) return 0;
   pw = getpwuid(xi);
@@ -82,8 +82,8 @@ static inline int cmp_user(struct dir *x, struct dir *y) {
 
 static inline int cmp_group(struct dir *x, struct dir *y) {
   char x_id[64] = {0}, y_id[64] = {0};
-  int xi = x->flags & FF_EXT ? dir_ext_ptr(x)->gid : 0;
-  int yi = y->flags & FF_EXT ? dir_ext_ptr(y)->gid : 0;
+  int xi = x->flags & FF_EXT ? x->gid : 0;
+  int yi = y->flags & FF_EXT ? y->gid : 0;
   struct group* gr;
   if (xi == yi) return 0;
   gr = getgrgid(xi);

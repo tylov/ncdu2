@@ -41,7 +41,7 @@ extern int si;
 
 static void browse_draw_info(struct dir *dr) {
   struct dir *t;
-  struct dir_ext *e = dir_ext_ptr(dr);
+  struct dir *e = dr->flags & FF_EXT ? dr : NULL;
   char mbuf[46];
   int i;
 
@@ -255,15 +255,15 @@ static void browse_draw_count(struct dir *n, int *x) {
 static void get_draw_mtime(struct dir *n, int *x, char* out) {
   char mbuf[32] = "....-..-.. ..:..", mdbuf[32] =  "----------";
   char ubuf[32] = "-no-user", gbuf[32] = "-no-group";
-  struct dir_ext *e = NULL;
+  struct dir *e = NULL;
   struct passwd* pw;
   struct group* gr;
   time_t t;
 
   if (n->flags & FF_EXT) {
-    e = dir_ext_ptr(n);
+    e = n;
   } else if (!strcmp(n->name, "..") && (n->parent->flags & FF_EXT)) {
-    e = dir_ext_ptr(n->parent);
+    e = n->parent;
   } 
   if (e) {
     t = (time_t) e->mtime;
