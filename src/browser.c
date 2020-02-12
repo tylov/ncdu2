@@ -29,9 +29,8 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <time.h>
-//#include <sys/types.h>
 #include <pwd.h>
-#include <grp.h>
+//#include <sys/types.h>
 
 static int graph = 3, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
 static char *message = NULL;
@@ -269,12 +268,8 @@ static void get_draw_mtime(struct dir *n, int *x, char* out) {
     t = (time_t) e->mtime;
     strftime(mbuf, sizeof(mbuf), "%Y-%m-%d %H:%M", localtime(&t));
     strcpy(mdbuf, fmtmode(e->mode));
-    pw = getpwuid(e->uid);
-    if (pw) strcpy(ubuf, cropstr2(pw->pw_name, 9));
-    else sprintf(ubuf, "%d", e->uid);
-    gr = getgrgid(e->gid);
-    if (gr) strcpy(gbuf, cropstr2(gr->gr_name, 9));
-    else sprintf(gbuf, "%d", e->gid);
+    get_username(e->uid, ubuf, 9);
+    get_groupname(e->gid, gbuf, 9);
   }
   sprintf(out, "%s  %s  %-9s %-9s   ", mbuf, mdbuf, ubuf, gbuf);
   *x += 50;
@@ -364,8 +359,8 @@ void get_sort_flags(char* out) {
   sprintf(out, "%c%c%c%c%c", 
           dirlist_sort_id == 1 ? 'U' : (dirlist_sort_id == 2 ? 'G' : '-'),
           dirlist_sort_df ? 'F' : '-', 
-          dirlist_sort_col == DL_COL_ASIZE ? 'S' :
-          dirlist_sort_col == DL_COL_SIZE ? 'K' :
+          dirlist_sort_col == DL_COL_ASIZE ? 'A' :
+          dirlist_sort_col == DL_COL_SIZE ? 'S' :
           dirlist_sort_col == DL_COL_ITEMS ? 'C' :
           dirlist_sort_col == DL_COL_NAME ? 'N' : 'M',
           dirlist_sort_desc ? '-' : '^',
@@ -411,9 +406,9 @@ void browse_draw() {
   uic_set(UIC_HD);
   mvhline(winrows-1, 0, ' ', wincols);
   if(t) {
-    mvaddstr(winrows-1, 1, "Total disk usage: ");
+    mvaddstr(winrows-1, 1, "Disk usage: ");
     printsize(UIC_HD, t->parent->size);
-    addstrc(UIC_HD, "     Apparent size: ");
+    addstrc(UIC_HD, "  Apparent size: ");
     uic_set(UIC_NUM_HD);
     printsize(UIC_HD, t->parent->asize);
     addstrc(UIC_HD, "  Items: ");
@@ -423,6 +418,19 @@ void browse_draw() {
     uic_set(UIC_NUM_HD);
     get_sort_flags(buf);
     printw(buf);
+#ifdef USERSTATS
+    get_username(getuid(), buf, 12);
+    printw("  User %s:", buf);
+    struct userdirstats *us = get_userdirstats(t->parent, getuid());
+    if (us) {
+      addstrc(UIC_HD, "  Size: ");
+      printsize(UIC_HD, us->size);
+      addstrc(UIC_HD, "  Items: ");
+      printw("%d", us->items);
+    } else {
+      printw(" no files");
+    }
+#endif
   } else
     mvaddstr(winrows-1, 0, " No items to display.");
   uic_set(UIC_DEFAULT);
@@ -458,6 +466,14 @@ void browse_draw() {
   move(selected+2, 0);
 }
 
+int compare_stats(const void *a, const void *b)
+{
+  struct userdirstats *stats_a = (struct userdirstats *) a,
+                      *stats_b = (struct userdirstats *) b;
+  int64_t diff = ((int64_t) stats_b->size) - ((int64_t) stats_a->size);
+  return diff < 0 ? -1 : diff > 0 ? 1 : 0;
+  //return stats_a->items - stats_b->items;
+}
 
 void write_report(void)
 {
@@ -483,14 +499,26 @@ void write_report(void)
       fprintf(fp, "       Directory : %s\n", getpath(t->parent));
       fprintf(fp, "            Date : %s\n", timebuf);
       value = formatsize(t->parent->size, &unit);
-      fprintf(fp, "Total disk usage : %6.2f %s\n", value, unit);
+      fprintf(fp, "      Disk usage : %6.2f %s\n", value, unit);
       value = formatsize(t->parent->asize, &unit);
       fprintf(fp, "   Apparent size : %6.2f %s\n", value, unit);
       fprintf(fp, "     Items count : %d\n", t->parent->items);
       fprintf(fp, "      Sort flags : %s\n\n", sflagsbuf);
+#ifdef USERSTATS
+      fprintf(fp, "Disk usage per user\n");
+      fprintf(fp, "-------------------\n");
+      int i, n = cvec_size(t->parent->users);
+      qsort(t->parent->users.data, n, sizeof(struct userdirstats), compare_stats);
+      struct userdirstats *us = t->parent->users.data;
+      for (i = 0; i < n; ++i, ++us) {
+        get_username(us->uid, fname, 15);
+        value = formatsize(us->size, &unit);
+        fprintf(fp, "  %-15s: disk: %6.2f %s  items: %d\n", fname, value, unit, us->items);
+      }
+#endif
     }
-        
     /* print the list to a file */
+    fprintf(fp, "\n");
     for(i = 0; t != NULL; t = dirlist_next(t), ++i) {
       get_draw_item(t, line);
       fprintf(fp, "%s\n", line);

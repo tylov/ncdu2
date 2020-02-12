@@ -77,6 +77,7 @@ extern int si;
 /* Macros/functions for managing struct dir allocation */
 
 #define dir_memsize(n)     (offsetof(struct dir, name) + strlen(n) + 1)
+void dir_destruct(struct dir*);
 
 /* Instead of using several ncurses windows, we only draw to stdscr.
  * the functions nccreate, ncprint and the macros ncaddstr and ncaddch
@@ -116,9 +117,15 @@ void nctab(int, int, int, char *);
 #define  ncaddchc(t, r, c, s) do { uic_set(t);  ncaddch(r, c, s); } while(0)
 #define  mvhlinec(t, r, c, s, n) do { uic_set(t);  mvhline(r, c, s, n); } while(0)
 
+struct userdirstats* get_userdirstats(struct dir*, uid_t);
+int add_dirstats(struct dir*, uid_t, int64_t, int64_t, int);
+
+void get_username(uid_t, char[], int);
+void get_groupname(gid_t, char[], int);
+
 /* crops a string into the specified length */
 char *cropstr(const char *, int);
-char *cropstr2(const char *, int);
+void cropstr2(const char *, char[], int);
 
 /* Converts the given size in bytes into a float (0 <= f < 1000) and a unit string */
 float formatsize(int64_t, char **);
@@ -155,7 +162,7 @@ struct dir *getroot(struct dir *);
     : (a)+(b) < 0 ? 0 : (a)+(b))
 
 /* Adds a value to the size, asize and items fields of *d and its parents */
-void addparentstats(struct dir *, int64_t, int64_t, uint64_t, int);
+void addparentstats(struct dir *, uid_t, int64_t, int64_t, time_t, int);
 
 
 /* A simple stack implemented in macros */

@@ -83,8 +83,9 @@ static void hlink_check(struct dir *d) {
           if(pt==par)
             i=0;
     if(i) {
-      par->size = adds64(par->size, d->size);
-      par->asize = adds64(par->size, d->asize);
+      add_dirstats(par, d->uid, d->size, d->asize, 0);
+      //par->size = adds64(par->size, d->size);
+      //par->asize = adds64(par->size, d->asize);
     }
   }
 }
@@ -142,10 +143,10 @@ static int item(struct dir *dir, const char *name) {
    * possible hard link, because hlnk_check() will take care of it in that
    * case. */
   if(item->flags & FF_HLNKC) {
-    addparentstats(item->parent, 0, 0, 0, 1);
+    addparentstats(item->parent, item->uid, 0, 0, 0, 1);
     hlink_check(item);
   } else {
-    addparentstats(item->parent, item->size, item->asize, item->mtime, 1);
+    addparentstats(item->parent, item->uid, item->size, item->asize, item->mtime, 1);
   }
 
   /* propagate ERR and SERR back up to the root */

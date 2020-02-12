@@ -27,6 +27,7 @@
 #define _global_h
 
 #include "config.h"
+#include "cvector.h"
 #include <stdio.h>
 #include <stddef.h>
 #include <limits.h>
@@ -60,20 +61,32 @@
 #define ST_SHELL  4
 #define ST_QUIT   5
 
+struct userdirstats {
+    uid_t uid;
+    int64_t size;
+    int items;
+};
+
+#ifdef USERSTATS
+declare_CVector(Usr, struct userdirstats);
+#endif
 
 /* structure representing a file or directory */
 struct dir {
   struct dir *parent, *next, *prev, *sub, *hlnk;
   ino_t ino;
   dev_t dev;
-  off_t size;
-  off_t asize;
+  int64_t size;
+  int64_t asize;
   int items;
   unsigned short flags;
   unsigned short mode;
   time_t mtime;
   uid_t uid;
   gid_t gid;
+#ifdef USERSTATS  
+  CVector(Usr) users;
+#endif
   char name[];
 };
 

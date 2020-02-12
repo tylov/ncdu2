@@ -33,12 +33,26 @@
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif
+#include <pwd.h>
+#include <grp.h>
 
 int uic_theme;
 int winrows, wincols;
 int subwinr, subwinc;
 int si;
 char thou_sep;
+
+void get_username(uid_t uid, char buf[], int max) {
+  struct passwd* pw = getpwuid(uid);
+  if (pw) cropstr2(pw->pw_name, buf, max);
+  else sprintf(buf, "%d", uid);
+}
+
+void get_groupname(gid_t gid, char buf[], int max) {
+  struct group* gr = getgrgid(gid);
+  if (gr) cropstr2(gr->gr_name, buf, max);
+  else sprintf(buf, "%d", gid);  
+}
 
 
 char *cropstr(const char *from, int s) {
@@ -61,20 +75,16 @@ char *cropstr(const char *from, int s) {
   return dat;
 }
 
-char *cropstr2(const char *from, int s) {
-  static char dat[4096];
-  if (s >= sizeof(dat))
-    s = sizeof(dat) - 1;
+void cropstr2(const char *from, char buf[], int s) {
   int o = strlen(from);
   if (o <= s) {
-    strcpy(dat, from);
+    strcpy(buf, from);
   } else {
-    strncpy(dat, from, s - 2);
-    dat[s - 2] = '.';
-    dat[s - 1] = '.';
-    dat[s] = '\0';
+    strncpy(buf, from, s - 2);
+    buf[s - 2] = '.';
+    buf[s - 1] = '.';
+    buf[s] = '\0';
   }
-  return dat;
 }
 
 
@@ -302,7 +312,50 @@ void uic_set(enum ui_coltype c) {
   attron(lastcolor);
 }
 
+#ifdef USERSTATS
+struct userdirstats*
+get_userdirstats(struct dir* d, uid_t uid) {
+  struct userdirstats* us = d->users.data;
+  int i, n = cvec_size(d->users);
+  
+  for (i = 0; i < n; ++i, ++us) {
+    if (us->uid == uid) return us;
+  }
+  return NULL;
+}
+#endif
 
+int add_dirstats(struct dir* d, uid_t uid,
+                  int64_t size, int64_t asize, int items) {
+  assert(d->flags & FF_DIR);
+  int ret = 0;
+  d->size += size;
+  d->asize += asize;
+  d->items += items;
+#ifdef USERSTATS
+  if (d->flags & FF_EXT) {
+    struct userdirstats *us = get_userdirstats(d, uid);
+    if (us) {
+      us->size += size;
+      us->items += items;
+      ret = 1;
+    } else {
+      struct userdirstats new_us = {uid, size, items};
+      assert(size >= 0 && items > 0);
+      cvecUsr_push(&d->users, new_us);
+      ret = 2;
+    }
+  }
+#endif
+  return ret;
+}
+
+void dir_destruct(struct dir *d) {
+#ifdef USERSTATS
+  cvec_destr(d->users);
+#endif
+  free(d);
+}
 
 /* removes item from the hlnk circular linked list and size counts of the parents */
 static void freedir_hlnk(struct dir *d) {
@@ -325,8 +378,9 @@ static void freedir_hlnk(struct dir *d) {
           if(pt==par)
             i=0;
     if(i) {
-      par->size = adds64(par->size, -d->size);
-      par->asize = adds64(par->size, -d->asize);
+      add_dirstats(par, d->uid, -d->size, -d->asize, 0);
+      //par->size = adds64(par->size, -d->size);
+      //par->asize = adds64(par->size, -d->asize);
     }
   }
 
@@ -347,7 +401,7 @@ static void freedir_rec(struct dir *dr) {
     /* remove item */
     if(tmp->sub) freedir_rec(tmp->sub);
     tmp2 = tmp->next;
-    free(tmp);
+    dir_destruct(tmp);
   }
 }
 
@@ -375,9 +429,8 @@ void freedir(struct dir *dr) {
    *
    * mtime is 0 here because recalculating the maximum at every parent
    * dir is expensive, but might be good feature to add later if desired */
-  addparentstats(dr->parent, dr->flags & FF_HLNKC ? 0 : -dr->size, dr->flags & FF_HLNKC ? 0 : -dr->asize, 0, -(dr->items+1));
-
-  free(dr);
+  addparentstats(dr->parent, dr->uid, dr->flags & FF_HLNKC ? 0 : -dr->size, dr->flags & FF_HLNKC ? 0 : -dr->asize, 0, -(dr->items+1));
+  dir_destruct(dr);
 }
 
 
@@ -427,11 +480,12 @@ struct dir *getroot(struct dir *d) {
 }
 
 
-void addparentstats(struct dir *d, int64_t size, int64_t asize, uint64_t mtime, int items) {
+void addparentstats(struct dir *d, uid_t uid, int64_t size, int64_t asize, time_t mtime, int items) {
   while(d) {
-    d->size = adds64(d->size, size);
-    d->asize = adds64(d->asize, asize);
-    d->items += items;
+    add_dirstats(d, uid, size, asize, items);
+    //d->size = adds64(d->size, size);
+    //d->asize = adds64(d->asize, asize);
+    //d->items += items;
     if (d->flags & FF_EXT) {
       d->mtime = (d->mtime > mtime) ? d->mtime : mtime;
     }
@@ -443,8 +497,8 @@ void addparentstats(struct dir *d, int64_t size, int64_t asize, uint64_t mtime, 
 /* Apparently we can just resume drawing after endwin() and ncurses will pick
  * up where it left. Probably not very portable...  */
 #define oom_msg "\nOut of memory, press enter to try again or Ctrl-C to give up.\n"
-#define wrap_oom(f) return f;
-#define wrap_oom_orig(f) \
+//#define wrap_oom(f) return f;
+#define wrap_oom(f) \
   void *ptr;\
   char buf[128];\
   while((ptr = f) == NULL) {\
