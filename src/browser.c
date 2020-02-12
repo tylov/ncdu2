@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <ncurses.h>
 #include <time.h>
+#include <sys/stat.h>
 #include <pwd.h>
 //#include <sys/types.h>
 
@@ -475,29 +476,57 @@ int compare_stats(const void *a, const void *b)
   //return stats_a->items - stats_b->items;
 }
 
+char* replace_char(char* str, char find, char replace) {
+  char *current_pos = strchr(str,find);
+  while (current_pos) {
+    *current_pos = replace;
+    current_pos = strchr(current_pos + 1, find);
+  }
+  return str;
+}
+
 void write_report(void)
 {
     int i;
     char line[4096];
-    char timebuf[32], sflagsbuf[32], fname[128];
+    char timebuf[32], fname[512], folder[512] = "", sflagsbuf[16];
     FILE* fp;
     time_t tm = time(NULL);
     struct dir *t = dirlist_get_head();
     float value;
     char* unit;
+    struct stat sb;
 
-    /* get start position */
+    if (dir_import_active) {
+        tm = dir_import_timestamp;
+    }
+
+    sprintf(line, "%s/docs/ncdu2_reports", getenv("HOME"));
+    if (stat(line, &sb) == -1) {
+      sprintf(line, "%s/docs", getenv("HOME"));
+      mkdir(line, 0775);
+      sprintf(line, "%s/docs/ncdu2_reports", getenv("HOME"));
+      int ret = mkdir(line, 0775);
+      if (ret) {
+        printf("Cannot create report at: %s\n", line);
+        return;
+      }
+    }
+    get_sort_flags(sflagsbuf);  
+    
     strftime(timebuf, sizeof(timebuf), "%Y%m%d", localtime(&tm));
-    get_sort_flags(sflagsbuf);
-    //sprintf(fname, ".ncdu2_report_%s~%s.txt", timebuf, sflagsbuf);
-    sprintf(fname, "ncdu2_report.txt");
-    fp = fopen(fname, "w");
+    strcpy(folder, t->parent ? getpath(t->parent) : getpath(t));
+    replace_char(folder, '/', ',');
+    
+    sprintf(fname, "%s/report_%s_%s", line, timebuf, folder);
 
+    
+    fp = fopen(fname, "w");
     if (t->parent) {
       fprintf(fp, "NCDU2 disk usage report\n");
       fprintf(fp, "-----------------------\n");
       fprintf(fp, "       Directory : %s\n", getpath(t->parent));
-      fprintf(fp, "            Date : %s\n", timebuf);
+      fprintf(fp, "            Date : %s%s\n", timebuf, (dir_import_active ? " [imported]" : ""));
       value = formatsize(t->parent->size, &unit);
       fprintf(fp, "      Disk usage : %6.2f %s\n", value, unit);
       value = formatsize(t->parent->asize, &unit);
@@ -524,6 +553,8 @@ void write_report(void)
       fprintf(fp, "%s\n", line);
     }
     fclose(fp);
+
+    message = "Report saved to ~/docs/ncdu2_reports";
 }
 
 

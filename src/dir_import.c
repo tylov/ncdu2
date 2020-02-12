@@ -56,7 +56,7 @@
 
 
 int dir_import_active = 0;
-
+uint64_t dir_import_timestamp = 0;
 
 /* Use a struct for easy batch-allocation and deallocation of state data. */
 struct ctx {
@@ -374,6 +374,35 @@ static int rval() {
 }
 
 
+static int metadata() {
+  uint64_t iv;
+
+  E(*ctx->buf != '{', "Expected JSON object");
+  con(1);
+
+  while(1) {
+    C(rkey(ctx->val, MAX_VAL));
+    /* TODO: strcmp() in this fashion isn't very fast. */
+    if(strcmp(ctx->val, "progname") == 0) {
+      C(rstring(ctx->val, MAX_VAL));
+    } else if(strcmp(ctx->val, "progver") == 0) {
+      C(rstring(ctx->val, MAX_VAL));
+    } else if(strcmp(ctx->val, "timestamp") == 0) {
+      C(rint64(&iv, INT64_MAX));
+      dir_import_timestamp = iv;
+    } else
+      C(rval());
+
+    C(cons());
+    if(*ctx->buf == '}')
+      break;
+    E(*ctx->buf != ',', "Expected ',' or '}'");
+    con(1);
+  }
+  con(1);
+  return 0;
+}
+
 /* Consumes everything up to the root item, and checks that this item is a dir. */
 static int header() {
   uint64_t v;
@@ -388,8 +417,8 @@ static int header() {
   C(cons() || rint64(&v, 10000) || cons()); /* Ignore the minor version for now */
   E(*ctx->buf != ',', "Expected ','");
   con(1);
-  /* Metadata block is currently ignored */
-  C(cons() || rval() || cons());
+  /* Metadata block is currently ignored: not anymore */
+  C(cons() || metadata() || cons());
   E(*ctx->buf != ',', "Expected ','");
   con(1);
 

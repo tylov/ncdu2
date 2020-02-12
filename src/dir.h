@@ -110,6 +110,7 @@ void dir_scan_init(const char *path);
 
 /* Importing a file */
 extern int dir_import_active;
+extern uint64_t dir_import_timestamp;
 int dir_import_init(const char *fn);
 
 

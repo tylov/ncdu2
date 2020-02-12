@@ -192,8 +192,8 @@ int ncresize(int minrows, int mincols) {
     ch = getch();
     getmaxyx(stdscr, winrows, wincols);
     if(ch == 'q') {
-      erase();
-      refresh();
+      //erase();
+      //refresh();
       endwin();
       exit(0);
     }
@@ -497,8 +497,8 @@ void addparentstats(struct dir *d, uid_t uid, int64_t size, int64_t asize, time_
 /* Apparently we can just resume drawing after endwin() and ncurses will pick
  * up where it left. Probably not very portable...  */
 #define oom_msg "\nOut of memory, press enter to try again or Ctrl-C to give up.\n"
-//#define wrap_oom(f) return f;
-#define wrap_oom(f) \
+#define wrap_oom(f) return f;
+#define wrap_oom_orig(f) \
   void *ptr;\
   char buf[128];\
   while((ptr = f) == NULL) {\
