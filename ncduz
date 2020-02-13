@@ -19,6 +19,7 @@ DEFAULT=.filelist
 FILE=$DEFAULT.ncdu.gz
 CREATE=0
 IMPORT=0
+SCAN=0
 HELP=0
 POSITIONAL=()
 
@@ -42,7 +43,11 @@ do
     -C)
     CREATE=2
     shift # past argument
-    ;;    
+    ;;  
+    -s|--scan)
+    SCAN=1
+    shift # past argument
+    ;;
     -h|--help)
     HELP=1
     POSITIONAL+=("$1") # pass it through
@@ -57,14 +62,21 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 if [ $HELP == 1 ]; then
-   echo "`basename $0` [-c | -C | -i] [-z filelist.gz]"
+   echo "`basename $0` <-i | -c | -C | -s> [-z filelist.gz]"
    echo "  -i, --import               Import specified or default filelist if it exists"
    echo "  -c, --create               Create new filelist and quit"
    echo "  -C                         Create new filelist and import it"
+   echo "  -s                         Scan directory tree directly"
    echo "  -z file, --gzfile file     Specify a gz filelist. Default .filelist.ncdu.gz"
    echo "  -h, --help                 This help"
    echo ""
    `dirname $0`/ncdu2 --help
+elif [ $IMPORT == 1 ]; then
+   if [ -f $FILE ]; then
+     gzip -dc $FILE | `dirname $0`/ncdu2 -y -f-
+   else
+     echo "Could not import file '$FILE'"
+   fi
 elif [ $CREATE != 0 ]; then
    `dirname $0`/ncdu2 $1 -x -1 --exclude ./.snapshots -o- | gzip > $FILE.tmp
    if [ -f $FILE.tmp ]; then
@@ -76,12 +88,8 @@ elif [ $CREATE != 0 ]; then
        gzip -dc $FILE | `dirname $0`/ncdu2 -y -f-
      fi
    fi
-elif [ $IMPORT == 1 ]; then
-   if [ -f $FILE ]; then
-     gzip -dc $FILE | `dirname $0`/ncdu2 -y -f-
-   else
-     echo "Could not read import file: $FILE"
-   fi
-else
+elif [ $SCAN == 1 ]; then
    `dirname $0`/ncdu2 $*
+else
+   echo Please specify either -i, -c, or -s. Use -h or --help for help.
 fi
