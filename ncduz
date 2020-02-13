@@ -15,7 +15,7 @@ __cleanup()
 trap __cleanup EXIT
 
 
-DEFAULT=.filelist
+DEFAULT=index
 FILE=$DEFAULT.ncdu.gz
 CREATE=0
 IMPORT=0
@@ -44,7 +44,7 @@ do
     CREATE=2
     shift # past argument
     ;;  
-    -s|--scan)
+    -m|--memory)
     SCAN=1
     shift # past argument
     ;;
@@ -62,12 +62,12 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 if [ $HELP == 1 ]; then
-   echo "`basename $0` <-i | -c | -C | -s> [-z filelist.gz]"
+   echo "`basename $0` <-i | -c | -C | -s> [-z indexfile]"
    echo "  -i, --import               Import specified or default filelist if it exists"
    echo "  -c, --create               Create new filelist and quit"
    echo "  -C                         Create new filelist and import it"
-   echo "  -s                         Scan directory tree directly"
-   echo "  -z file, --gzfile file     Specify a gz filelist. Default .filelist.ncdu.gz"
+   echo "  -m, --memory               Scan directory tree in memory only"
+   echo "  -z file, --gzfile file     The gzipped file index file. Default $DEFAULT.ncdu.gz"
    echo "  -h, --help                 This help"
    echo ""
    `dirname $0`/ncdu2 --help
@@ -81,7 +81,7 @@ elif [ $CREATE != 0 ]; then
    `dirname $0`/ncdu2 $1 -x -1 --exclude ./.snapshots -o- | gzip > $FILE.tmp
    if [ -f $FILE.tmp ]; then
      if [ $FILE == $DEFAULT.ncdu.gz ] && [ -f $FILE ]; then
-       mv $FILE $DEFAULT.last.gz
+       mv $FILE $DEFAULT.prev.gz
      fi
      mv $FILE.tmp $FILE
      if [ $CREATE == 2 ]; then
@@ -91,5 +91,5 @@ elif [ $CREATE != 0 ]; then
 elif [ $SCAN == 1 ]; then
    `dirname $0`/ncdu2 $*
 else
-   echo Please specify either -i, -c, or -s. Use -h or --help for help.
+   echo Please specify either -i, -c, or -m. Use -h or --help for help.
 fi
