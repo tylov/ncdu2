@@ -41,9 +41,9 @@ int pstate;
 int read_only = 0;
 long update_delay = 100;
 int cachedir_tags = 0;
-int extended_info = 0;
+int extended_info = 1;
 int follow_symlinks = 0;
-int confirm_quit = 1;
+int confirm_quit = -1;
 
 static int min_rows = 17, min_cols = 60;
 static int ncurses_init = 0;
@@ -121,7 +121,6 @@ static void argv_parse(int argc, char **argv) {
   char *export = NULL;
   char *import = NULL;
   char *dir = NULL;
-  int ext_info = 1;
 
   static yopt_opt_t opts[] = {
     { 'h', 0, "-h,-?,--help" },
@@ -159,8 +158,6 @@ static void argv_parse(int argc, char **argv) {
       printf("  -h, --help                 This help message\n");
       printf("  -q                         Quiet mode, refresh interval 2 seconds\n");
       printf("  -x                         Same filesystem only\n");
-      printf("  -e                         Enable extended information (default)\n");
-      printf("  -E                         Disable extended information\n");
       printf("  -r                         Read only\n");
       printf("  -o FILE                    Export scanned directory to FILE\n");
       printf("  -f FILE                    Import scanned directory from FILE\n");
@@ -180,8 +177,7 @@ static void argv_parse(int argc, char **argv) {
       printf("ncdu2 %s\n", PACKAGE_VERSION);
       exit(0);
     case 'x': dir_scan_smfs = 1; break;
-    case 'e': ext_info = 1; break;
-    case 'E': ext_info = 0; break;
+    case 'e': break; // backward comp.
     case 'r': read_only++; break;
     case 's': si = 1; break;
     case 'o': export = val; break;
@@ -216,8 +212,6 @@ static void argv_parse(int argc, char **argv) {
     }
   }
   
-  extended_info = ext_info;
-
   if(export) {
     if(dir_export_init(export)) {
       fprintf(stderr, "Can't open %s: %s\n", export, strerror(errno));
@@ -235,8 +229,10 @@ static void argv_parse(int argc, char **argv) {
     }
     if(strcmp(import, "-") == 0)
       ncurses_tty = 1;
+    if (confirm_quit == -1) confirm_quit = 0;
   } else {
     dir_scan_init(dir ? dir : ".");
+    if (confirm_quit == -1) confirm_quit = 1;
   }
 
   /* Use the single-line scan feedback by default when exporting to file, no

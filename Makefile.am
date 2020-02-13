@@ -1,5 +1,6 @@
-AM_CPPFLAGS=-I$(srcdir)/deps
 bin_PROGRAMS=ncdu2
+
+ncdu2_CPPFLAGS=-Ideps -DFANCY_BOX -DUSERSTATS
 
 ncdu2_SOURCES=\
 	src/browser.c\
