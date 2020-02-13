@@ -30,8 +30,6 @@
 #include <ncurses.h>
 #include <time.h>
 #include <sys/stat.h>
-#include <pwd.h>
-//#include <sys/types.h>
 
 static int graph = 3, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
 static char *message = NULL;
@@ -256,8 +254,6 @@ static void get_draw_mtime(struct dir *n, int *x, char* out) {
   char mbuf[32] = "....-..-.. ..:..", mdbuf[32] =  "----------";
   char ubuf[32] = "-no-user", gbuf[32] = "-no-group";
   struct dir *e = NULL;
-  struct passwd* pw;
-  struct group* gr;
   time_t t;
 
   if (n->flags & FF_EXT) {
@@ -389,9 +385,10 @@ void browse_draw() {
   addchc(UIC_KEY_HD, 'q');
   addstrc(UIC_HD, " to quit.");
   
-  if(dir_import_active)
-    mvaddstr(0, wincols-10, "[imported]");
-  else if(read_only)
+  if(dir_import_active) {
+    strftime(buf, sizeof(buf), "[imported %Y-%m-%d]", localtime(&dir_import_timestamp));
+    mvaddstr(0, wincols-21, buf);
+  } else if(read_only)
     mvaddstr(0, wincols-11, "[read-only]");
 
   /* second line - the path */
@@ -471,9 +468,15 @@ int compare_stats(const void *a, const void *b)
 {
   struct userdirstats *stats_a = (struct userdirstats *) a,
                       *stats_b = (struct userdirstats *) b;
-  int64_t diff = ((int64_t) stats_b->size) - ((int64_t) stats_a->size);
-  return diff < 0 ? -1 : diff > 0 ? 1 : 0;
+  // Dont take diff, because they are unsigned 64 bits.
+  return stats_b->size < stats_a->size ? -1 : stats_b->size > stats_a->size ? 1 : 0;
+  // Items:
   //return stats_a->items - stats_b->items;
+  // Username:
+  //char buf_a[64], buf_b[64];
+  //get_username(stats_a->uid, buf_a, 63);
+  //get_username(stats_b->uid, buf_b, 63);
+  //return strcmp(buf_a, buf_b);
 }
 
 char* replace_char(char* str, char find, char replace) {
@@ -512,7 +515,7 @@ void write_report(void)
     strftime(timebuf, sizeof(timebuf), "%Y-%m-%d", localtime(&tm));
     strcpy(folder, t->parent ? getpath(t->parent) : getpath(t));
     replace_char(folder, '/', '.');
-    sprintf(fname, "%s/report-%s%s#.txt", line, timebuf, folder);
+    sprintf(fname, "%s/report-%s%s#%s.txt", line, timebuf, folder, sflagsbuf);
 
     fp = fopen(fname, "w");
     if (t->parent) {
@@ -547,7 +550,7 @@ void write_report(void)
     }
     fclose(fp);
 
-    message = "Report saved in $HOME/.ncdu2/ folder";
+    message = "Report saved under $HOME/.ncdu2/";
 }
 
 

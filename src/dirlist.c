@@ -27,8 +27,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <pwd.h>
-#include <grp.h>
 
 /* public variables */
 struct dir *dirlist_parent = NULL,
@@ -40,7 +38,7 @@ int    dirlist_sort_desc   = 1,
        dirlist_sort_col    = DL_COL_SIZE,
        dirlist_sort_df     = 0,
        dirlist_hidden      = 0,
-       dirlist_sort_id     = 0; // uid, gid
+       dirlist_sort_id     = 0; // uid=1, gid=2
 
 /* private state vars */
 static struct dir *parent_alloc, *head, *head_real, *selected, *top = NULL;
@@ -69,14 +67,9 @@ static inline int cmp_user(struct dir *x, struct dir *y) {
   char x_id[64] = {0}, y_id[64] = {0};
   int xi = x->flags & FF_EXT ? x->uid : 0;
   int yi = y->flags & FF_EXT ? y->uid : 0;
-  struct passwd* pw;
   if (xi == yi) return 0;
-  pw = getpwuid(xi);
-  if (pw) strncpy(x_id, pw->pw_name, 63);
-  else sprintf(x_id, "%d", xi);
-  pw = getpwuid(yi);
-  if (pw) strncpy(y_id, pw->pw_name, 63);
-  else sprintf(y_id, "%d", yi);
+  get_username(xi, x_id, 63);
+  get_username(yi, y_id, 63);
   return strcmp(x_id, y_id);
 }
 
@@ -84,14 +77,9 @@ static inline int cmp_group(struct dir *x, struct dir *y) {
   char x_id[64] = {0}, y_id[64] = {0};
   int xi = x->flags & FF_EXT ? x->gid : 0;
   int yi = y->flags & FF_EXT ? y->gid : 0;
-  struct group* gr;
   if (xi == yi) return 0;
-  gr = getgrgid(xi);
-  if (gr) strncpy(x_id, gr->gr_name, 63);
-  else sprintf(x_id, "%d", xi);
-  gr = getgrgid(yi);
-  if (gr) strncpy(y_id, gr->gr_name, 63);
-  else sprintf(y_id, "%d", yi);
+  get_groupname(xi, x_id, 63);
+  get_groupname(yi, y_id, 63);
   return strcmp(x_id, y_id);
 }
 
