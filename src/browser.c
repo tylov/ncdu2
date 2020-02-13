@@ -497,30 +497,23 @@ void write_report(void)
     char* unit;
     struct stat sb;
 
-    if (dir_import_active) {
-        tm = dir_import_timestamp;
-    }
-
-    sprintf(line, "%s/docs/ncdu2_reports", getenv("HOME"));
+    sprintf(line, "%s/.ncdu2", getenv("HOME"));
     if (stat(line, &sb) == -1) {
-      sprintf(line, "%s/docs", getenv("HOME"));
-      mkdir(line, 0775);
-      sprintf(line, "%s/docs/ncdu2_reports", getenv("HOME"));
-      int ret = mkdir(line, 0775);
-      if (ret) {
-        printf("Cannot create report at: %s\n", line);
+      if (mkdir(line, 0775) == -1) {
+        message = "Cannot create report in $HOME/.ncdu2 folder";
         return;
       }
     }
+    if (dir_import_active) {
+        tm = dir_import_timestamp;
+    }
     get_sort_flags(sflagsbuf);  
     
-    strftime(timebuf, sizeof(timebuf), "%Y%m%d", localtime(&tm));
+    strftime(timebuf, sizeof(timebuf), "%Y-%m-%d", localtime(&tm));
     strcpy(folder, t->parent ? getpath(t->parent) : getpath(t));
-    replace_char(folder, '/', ',');
-    
-    sprintf(fname, "%s/report_%s_%s", line, timebuf, folder);
+    replace_char(folder, '/', '.');
+    sprintf(fname, "%s/report-%s%s#.txt", line, timebuf, folder);
 
-    
     fp = fopen(fname, "w");
     if (t->parent) {
       fprintf(fp, "NCDU2 disk usage report\n");
@@ -554,7 +547,7 @@ void write_report(void)
     }
     fclose(fp);
 
-    message = "Report saved to ~/docs/ncdu2_reports";
+    message = "Report saved in $HOME/.ncdu2/ folder";
 }
 
 

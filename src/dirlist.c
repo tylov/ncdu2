@@ -77,7 +77,7 @@ static inline int cmp_user(struct dir *x, struct dir *y) {
   pw = getpwuid(yi);
   if (pw) strncpy(y_id, pw->pw_name, 63);
   else sprintf(y_id, "%d", yi);
-  return strcmp(y_id, x_id);
+  return strcmp(x_id, y_id);
 }
 
 static inline int cmp_group(struct dir *x, struct dir *y) {
@@ -92,7 +92,7 @@ static inline int cmp_group(struct dir *x, struct dir *y) {
   gr = getgrgid(yi);
   if (gr) strncpy(y_id, gr->gr_name, 63);
   else sprintf(y_id, "%d", yi);
-  return strcmp(y_id, x_id);
+  return strcmp(x_id, y_id);
 }
 
 
@@ -134,7 +134,7 @@ static int dirlist_cmp(struct dir *x, struct dir *y) {
         CMP_EVAL(strcmp(x->name, y->name), 0);
         break;
  	case DL_COL_NAME:
- 		CMP_EVAL(strcmp(x->name, y->name), dirlist_sort_desc);
+ 		CMP_EVAL(strcmp(x->name, y->name), !dirlist_sort_desc);
  		break;
  	case DL_COL_SIZE:
  		CMP_EVAL(CMP_MEMB(size), dirlist_sort_desc);
