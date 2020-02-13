@@ -26,7 +26,7 @@ while [[ $# -gt 0 ]]
 do
   key="$1"
   case $key in
-    -z)
+    -z|--gzfile)
     FILE="$2"
     shift # past argument
     shift # past value
@@ -43,8 +43,9 @@ do
     CREATE=2
     shift # past argument
     ;;    
-    -h)
+    -h|--help)
     HELP=1
+    POSITIONAL+=("$1") # pass it through
     shift # past argument
     ;;    
     *)    # unknown option
@@ -56,12 +57,14 @@ done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
 if [ $HELP == 1 ]; then
-   echo "Usage `basename $0` [-c | -C | -i] [-z filelist.gz]"
-   echo "       -i        Import the specified or default filelist file if it exist"
-   echo "       -c        Create new filelist and quit"
-   echo "       -C        Create new filelist and import it"
-   echo "       -z file   Specify a gzipped filelist file. Default is '.filelist.ncdu.gz'"
-   echo "       -h        This help"
+   echo "`basename $0` [-c | -C | -i] [-z filelist.gz]"
+   echo "  -i, --import               Import specified or default filelist if it exists"
+   echo "  -c, --create               Create new filelist and quit"
+   echo "  -C                         Create new filelist and import it"
+   echo "  -z file, --gzfile file     Specify a gz filelist. Default .filelist.ncdu.gz"
+   echo "  -h, --help                 This help"
+   echo ""
+   `dirname $0`/ncdu2 --help
 elif [ $CREATE != 0 ]; then
    `dirname $0`/ncdu2 $1 -x -1 --exclude ./.snapshots -o- | gzip > $FILE.tmp
    if [ -f $FILE.tmp ]; then
