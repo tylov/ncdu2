@@ -1,5 +1,5 @@
-ncdu2 1.0
-=========
+ncdu2 v1.0
+==========
 
 DESCRIPTION
 
@@ -9,17 +9,17 @@ DESCRIPTION
   ncdu2 is based on ncdu 1.14.1 at git://g.blicky.net/ncdu.git
   
 DIFFERENCES FROM NCDU
-  - Added user and groups columns
-  - Possible to sort by users or groups as first sort priority
+  - Added user and groups columns. Possible to sort by users or groups 
+    as the top-level sorting.
   - Added per-user stats (total usage, items) at each directory level.
-  - Shows stats for current user on bottom status line.
-  - Added option to save report with list of current view. It also
-    lists stats for each user for current folder.
+  - Always shows stats for current user on bottom status line.
+  - Added option to save report with list of current view. Report also
+    lists stats for each user for the current folder tree.
   - Added parsing of date metadata of imported index file, and shows it
     as [imported YYYY-MM-DD] in upper right corner.
   - Remapped key mapping, and changed many defaults compared to ncdu.
   - Not possible to disable "extended info", also completely removed internally.
-  - Added NCDUZ front-end script for easy import export of gzipped index files.
+  - Added NCDUZ front-end script that eases import/export of gzipped index files.
     
 REQUIREMENTS
 
