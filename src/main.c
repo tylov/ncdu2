@@ -134,8 +134,9 @@ static void argv_parse(int argc, char **argv) {
     { '0', 0, "-0" },
     { '1', 0, "-1" },
     { '2', 0, "-2" },
+    { 'u', 0, "-u" },
+    { 'g', 0, "-g" },
     {  1,  1, "--exclude" },
-    { 'E', 0, "-E"},
     { 'X', 1, "-X,--exclude-from" },
     { 'L', 0, "-L,--follow-symlinks" },
     { 'C', 0, "--exclude-caches" },
@@ -157,18 +158,20 @@ static void argv_parse(int argc, char **argv) {
       printf("ncdu2 <options> <directory>\n");
       printf("  -h, --help                 This help message\n");
       printf("  -q                         Quiet mode, refresh interval 2 seconds\n");
-      printf("  -x                         Same filesystem only\n");
-      printf("  -r                         Read only\n");
+      printf("  -x                         Exclude scanning other file systems\n");
+      printf("  -r                         Read only. Disables delete function.\n");
       printf("  -o FILE                    Export scanned directory to FILE\n");
       printf("  -f FILE                    Import scanned directory from FILE\n");
       printf("  -0, -1, -2                 UI to use when scanning (0=none,2=full ncurses)\n");
+      printf("  -u,                        Sort user as top-level criteria\n");
+      printf("  -g                         Sort group as top-level criteria\n");
       printf("  --si                       Use base 10 (SI) prefixes instead of base 2\n");
       printf("  --exclude PATTERN          Exclude files that match PATTERN\n");
       printf("  -X, --exclude-from FILE    Exclude files that match any pattern in FILE\n");
       printf("  -L, --follow-symlinks      Follow symbolic links (excluding directories)\n");
       printf("  --exclude-caches           Exclude directories containing CACHEDIR.TAG\n");
-      printf("  --confirm-quit             Confirm on quitting (default)\n");
-      printf("  -y                         Quit without confirmation\n");
+      printf("  --confirm-quit             Confirm on quit\n");
+      printf("  -y                         No confirm on quit (default on import)\n");
       printf("  --color SCHEME             Set color scheme\n");
       printf("  --version                  Print version\n");
       exit(0);
@@ -185,6 +188,8 @@ static void argv_parse(int argc, char **argv) {
     case '0': dir_ui = 0; break;
     case '1': dir_ui = 1; break;
     case '2': dir_ui = 2; break;
+    case 'u': dirlist_sort_id = 1; break;
+    case 'g': dirlist_sort_id = 2; break;
     case 'Q': confirm_quit = 1; break;
     case 'y': confirm_quit = 0; break;
     case  1 : exclude_add(val); break; /* --exclude */

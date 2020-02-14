@@ -354,14 +354,14 @@ static void get_draw_item(struct dir *n, char *line) {
 
 void get_sort_flags(char* out) {
   sprintf(out, "%c%c%c%c%c", 
-          dirlist_sort_id == 1 ? 'U' : (dirlist_sort_id == 2 ? 'G' : '-'),
-          dirlist_sort_df ? 'F' : '-', 
-          dirlist_sort_col == DL_COL_ASIZE ? 'A' :
-          dirlist_sort_col == DL_COL_SIZE ? 'S' :
-          dirlist_sort_col == DL_COL_ITEMS ? 'C' :
-          dirlist_sort_col == DL_COL_NAME ? 'N' : 'M',
+          dirlist_sort_id == 1 ? 'u' : (dirlist_sort_id == 2 ? 'g' : '-'),
+          dirlist_sort_df ? 'f' : '-', 
+          dirlist_sort_col == DL_COL_ASIZE ? 'a' :
+          dirlist_sort_col == DL_COL_SIZE ? 's' :
+          dirlist_sort_col == DL_COL_ITEMS ? 'c' :
+          dirlist_sort_col == DL_COL_NAME ? 'n' : 'm',
           dirlist_sort_desc ? '-' : '^',
-          dirlist_hidden ? 'X' : '-');
+          dirlist_hidden ? 'x' : '-');
 }
 
 
@@ -404,14 +404,14 @@ void browse_draw() {
   uic_set(UIC_HD);
   mvhline(winrows-1, 0, ' ', wincols);
   if(t) {
-    mvaddstr(winrows-1, 1, "Disk usage: ");
+    mvaddstr(winrows-1, 1, "Disk usage:");
     printsize(UIC_HD, t->parent->size);
-    addstrc(UIC_HD, "  Apparent size: ");
+    addstrc(UIC_HD, "  Apparent size:");
     uic_set(UIC_NUM_HD);
     printsize(UIC_HD, t->parent->asize);
-    addstrc(UIC_HD, "  Items: ");
+    addstrc(UIC_HD, "  Items:");
     uic_set(UIC_NUM_HD);
-    printw("%d", t->parent->items);
+    printw(" %d", t->parent->items);
     addstrc(UIC_HD, "  Sort flags: ");
     uic_set(UIC_NUM_HD);
     get_sort_flags(buf);
@@ -421,10 +421,12 @@ void browse_draw() {
     printw("  User %s:", buf);
     struct userdirstats *us = get_userdirstats(t->parent, getuid());
     if (us) {
-      addstrc(UIC_HD, "  Size: ");
+      addstrc(UIC_HD, "  Disk usage:");
+      uic_set(UIC_NUM_HD);
       printsize(UIC_HD, us->size);
-      addstrc(UIC_HD, "  Items: ");
-      printw("%d", us->items);
+      addstrc(UIC_HD, "  Items:");
+      uic_set(UIC_NUM_HD);
+      printw(" %d", us->items);
     } else {
       printw(" no files");
     }
@@ -500,6 +502,9 @@ void write_report(void)
     char* unit;
     struct stat sb;
 
+    if (dir_import_active) {
+        tm = dir_import_timestamp;
+    }
     sprintf(line, "%s/.ncdu2", getenv("HOME"));
     if (stat(line, &sb) == -1) {
       if (mkdir(line, 0775) == -1) {
@@ -507,15 +512,20 @@ void write_report(void)
         return;
       }
     }
-    if (dir_import_active) {
-        tm = dir_import_timestamp;
+    strftime(timebuf, sizeof(timebuf), "%Y-%m-%d", localtime(&tm));
+    sprintf(line, "%s/.ncdu2/reports-%s", getenv("HOME"), timebuf);
+    if (stat(line, &sb) == -1) {
+      if (mkdir(line, 0775) == -1) {
+        message = "Cannot create report in $HOME/.ncdu2 folder";
+        return;
+      }
     }
+    
     get_sort_flags(sflagsbuf);  
     
-    strftime(timebuf, sizeof(timebuf), "%Y-%m-%d", localtime(&tm));
     strcpy(folder, t->parent ? getpath(t->parent) : getpath(t));
     replace_char(folder, '/', '.');
-    sprintf(fname, "%s/report-%s%s#%s.txt", line, timebuf, folder, sflagsbuf);
+    sprintf(fname, "%s/report-%s%s#%c%c.txt", line, timebuf, timebuf, folder, sflagsbuf[0], sflagsbuf[2]);
 
     fp = fopen(fname, "w");
     if (t->parent) {
