@@ -43,7 +43,7 @@ char *keys[KEYS*2] = {
             "a", "Sort by apparent size (asc./desc.)",
             "c", "Sort by item count (asc./desc.)",
             "m", "Sort by mod. time (ext info)",
-            "p", "Print report to file in ~/.ncdu2/"
+            "p", "Print report to file in ~/.ncdu2/",
             "u", "Toggle sort user first (ext info)",
             "g", "Toggle sort group first (ext info)",
             "f", "Toggle folders first",
