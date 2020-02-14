@@ -152,10 +152,11 @@ void help_draw() {
       ncaddstr(y+0, x+30, "NCurses");
       ncaddstr(y+1, x+30, "Disk");
       ncaddstr(y+2, x+30, "Usage");
-      ncprint( y+4, x+30, "%s", PACKAGE_VERSION);
+      ncprint( y+4, x+30, "2 v%s", PACKAGE_VERSION);
       ncaddstr( 9,  7, "Written by Yoran Heling <projects@yorhel.nl>");
-      ncaddstr(10, 16, "https://dev.yorhel.nl/ncdu/");
-      ncaddstr(11,  7, "Modified by Tyge Løvset <tylo@norceresearch.no>");
+      ncaddstr(10,  7, "   https://dev.yorhel.nl/ncdu/");
+      ncaddstr(11,  7, "and Tyge Løvset <tylo@norceresearch.no>");
+      ncaddstr(12,  7, "   https://github.com/tylo-work/ncdu2");
       break;
   }
 }
