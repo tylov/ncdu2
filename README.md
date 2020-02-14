@@ -1,14 +1,26 @@
-# ncdu2 - forked from
-ncdu 1.14.1
-===========
+ncdu2 v1.0
+==========
 
 DESCRIPTION
 
-  ncdu (NCurses Disk Usage) is a curses-based version of
+  ncdu2 (NCurses Disk Usage) is a curses-based version of
   the well-known 'du', and provides a fast way to see what
   directories are using your disk space.
-
-
+  ncdu2 is based on ncdu 1.14.1 at git://g.blicky.net/ncdu.git
+  
+DIFFERENCES FROM NCDU
+  - Added user and groups columns. Possible to sort by users or groups 
+    as the top-level sorting.
+  - Added per-user stats (total usage, items) at each directory level.
+  - Always shows stats for current user on bottom status line.
+  - Added option to save report with list of current view. Report also
+    lists stats for each user for the current folder tree.
+  - Added parsing of date metadata of imported index file, and shows it
+    as [imported YYYY-MM-DD] in upper right corner.
+  - Remapped key mapping, and changed many defaults compared to ncdu.
+  - Not possible to disable "extended info", also completely removed internally.
+  - Added NCDUZ front-end script that eases import/export of gzipped index files.
+    
 REQUIREMENTS
 
   In order to compile and install ncdu, you need to have
@@ -34,7 +46,7 @@ INSTALL
 
 COPYING
 
-  Copyright (c) 2007-2019 Yoran Heling
+  Copyright (c) 2007-2020 Yoran Heling, Tyge Løvset
 
   Permission is hereby granted, free of charge, to any person obtaining
   a copy of this software and associated documentation files (the
