@@ -352,7 +352,7 @@ static void get_draw_item(struct dir *n, char *line) {
 }
 
 
-void get_sort_flags(char* out) {
+void get_sortflags(char* out) {
   sprintf(out, "%c%c%c%c%c", 
           dirlist_sort_id == 1 ? 'u' : (dirlist_sort_id == 2 ? 'g' : '-'),
           dirlist_sort_df ? 'f' : '-', 
@@ -414,7 +414,7 @@ void browse_draw() {
     printw(" %d", t->parent->items);
     addstrc(UIC_HD, "  Sort flags: ");
     uic_set(UIC_NUM_HD);
-    get_sort_flags(buf);
+    get_sortflags(buf);
     printw(buf);
 #ifdef USERSTATS
     get_username(getuid(), buf, 12);
@@ -492,9 +492,9 @@ char* replace_char(char* str, char find, char replace) {
 
 void write_report(void)
 {
-    int i;
+    int i, n;
     char line[4096];
-    char timebuf[32], fname[512], folder[512] = "", sflagsbuf[16];
+    char timebuf[32], path1[512], path2[512] = "", sflagsbuf[16];
     FILE* fp;
     time_t tm = time(NULL);
     struct dir *t = dirlist_get_head();
@@ -502,56 +502,58 @@ void write_report(void)
     char* unit;
     struct stat sb;
 
-    if (dir_import_active) {
-        tm = dir_import_timestamp;
+    if (!t || !t->parent) {
+      message = "No current dir";
+      return;
     }
-    sprintf(line, "%s/.ncdu2", getenv("HOME"));
-    if (stat(line, &sb) == -1) {
-      if (mkdir(line, 0775) == -1) {
-        message = "Cannot create report in $HOME/.ncdu2 folder";
+
+    if (dir_import_active) {
+      tm = dir_import_timestamp;
+    }
+    sprintf(path1, "%s/.ncdu2", getenv("HOME"));
+    if (stat(path1, &sb) == -1) {
+      if (mkdir(path1, 0775) == -1) {
+        message = "Cannot create $HOME/.ncdu2  folder";
         return;
       }
     }
     strftime(timebuf, sizeof(timebuf), "%Y-%m-%d", localtime(&tm));
-    sprintf(line, "%s/.ncdu2/reports-%s", getenv("HOME"), timebuf);
-    if (stat(line, &sb) == -1) {
-      if (mkdir(line, 0775) == -1) {
+    sprintf(path2, "%s/report-%s", path1, timebuf);
+    if (stat(path2, &sb) == -1) {
+      if (mkdir(path2, 0775) == -1) {
         message = "Cannot create report in $HOME/.ncdu2 folder";
         return;
       }
     }
     
-    get_sort_flags(sflagsbuf);  
-    
-    strcpy(folder, t->parent ? getpath(t->parent) : getpath(t));
-    replace_char(folder, '/', '.');
-    sprintf(fname, "%s/report-%s%s#%c%c.txt", line, timebuf, timebuf, folder, sflagsbuf[0], sflagsbuf[2]);
+    strcpy(line, getpath(t->parent));
+    replace_char(line, '/', '.');
+    get_sortflags(sflagsbuf);  
+    sprintf(path1, "%s/report-%s%s#%c%c.txt", path2, timebuf, line, sflagsbuf[0], sflagsbuf[2]);
 
-    fp = fopen(fname, "w");
-    if (t->parent) {
-      fprintf(fp, "NCDU2 disk usage report\n");
-      fprintf(fp, "-----------------------\n");
-      fprintf(fp, "       Directory : %s\n", getpath(t->parent));
-      fprintf(fp, "            Date : %s%s\n", timebuf, (dir_import_active ? " [imported]" : ""));
-      value = formatsize(t->parent->size, &unit);
-      fprintf(fp, "      Disk usage : %6.2f %s\n", value, unit);
-      value = formatsize(t->parent->asize, &unit);
-      fprintf(fp, "   Apparent size : %6.2f %s\n", value, unit);
-      fprintf(fp, "     Items count : %d\n", t->parent->items);
-      fprintf(fp, "      Sort flags : %s\n\n", sflagsbuf);
+    fp = fopen(path1, "w");
+    fprintf(fp, "NCDU2 disk usage report\n");
+    fprintf(fp, "-----------------------\n");
+    fprintf(fp, "       Directory : %s\n", getpath(t->parent));
+    fprintf(fp, "            Date : %s%s\n", timebuf, (dir_import_active ? " [imported]" : ""));
+    value = formatsize(t->parent->size, &unit);
+    fprintf(fp, "      Disk usage : %6.2f %s\n", value, unit);
+    value = formatsize(t->parent->asize, &unit);
+    fprintf(fp, "   Apparent size : %6.2f %s\n", value, unit);
+    fprintf(fp, "     Items count : %d\n", t->parent->items);
+    fprintf(fp, "      Sort flags : %s\n\n", sflagsbuf);
 #ifdef USERSTATS
-      fprintf(fp, "Disk usage per user\n");
-      fprintf(fp, "-------------------\n");
-      int i, n = cvec_size(t->parent->users);
-      qsort(t->parent->users.data, n, sizeof(struct userdirstats), compare_stats);
-      struct userdirstats *us = t->parent->users.data;
-      for (i = 0; i < n; ++i, ++us) {
-        get_username(us->uid, fname, 15);
-        value = formatsize(us->size, &unit);
-        fprintf(fp, "  %-15s: disk: %6.2f %s  items: %d\n", fname, value, unit, us->items);
-      }
-#endif
+    fprintf(fp, "Disk usage per user\n");
+    fprintf(fp, "-------------------\n");
+    n = cvec_size(t->parent->users);
+    qsort(t->parent->users.data, n, sizeof(struct userdirstats), compare_stats);
+    struct userdirstats *us = t->parent->users.data;
+    for (i = 0; i < n; ++i, ++us) {
+      get_username(us->uid, path1, 15);
+      value = formatsize(us->size, &unit);
+      fprintf(fp, "  %-15s: disk: %6.2f %s  items: %d\n", path1, value, unit, us->items);
     }
+#endif
     /* print the list to a file */
     fprintf(fp, "\n");
     for(i = 0; t != NULL; t = dirlist_next(t), ++i) {
