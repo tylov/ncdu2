@@ -46,7 +46,6 @@ int main()
     Customer customer3; cust_init1(&customer3, "Tyge", "Løvset", "Fagertunet 14", 55);
     
     CString text = cstr_init();
-    printf("%d %d\n", text.str[0], text.str[1]);
     cstr_assign(&text, "Initial value");
 
     CString hello = cstr_init_c("Hello, there is a new value.");
@@ -54,10 +53,9 @@ int main()
     cstr_append(&hello, " This is the last sentence.");
     printf("%s\n", hello.str);
     
-    cstr_assign_n(&text, "Hello, there is a new value.", 100);
-    cstr_concat(&text, " This is no trouble.");
-    cstr_concat(&text, " This is the last sentence.");
-    printf("%s: %zd\n", text.str, cstr_length(text));
+    cstr_assign(&text, "Hello, there is a new value.");
+    cstr_append(&text, " This is no trouble.");
+    printf("%s: %d\n", text.str, cstr_size(text));
     
     printf("%s, %s, %s, %d\n\n", customer2->firstName.str, customer2->lastName.str,
                                  customer2->streetAddress.str, customer2->age);
@@ -74,18 +72,20 @@ int main()
     cstr_assign(&name, "Great");
     printf("name2: %s %zd\n", name.str, sizeof(size_t));
 
-    int n = 100000;
-    CString vec = cstr_init_n("", n);
-    int i;
-    for (i=0; i<n; ++i) vec.str[i] = 'a' + (rand() % 26);
-    
+    int i, n = 100000;
+    CString vec = cstr_null;
+    cstr_reserve(&vec, n);
+    for (i=0; i<n; ++i)
+        cstr_push(&vec, 'a' + (rand() % 26));
+
     p = cstr_find(vec, "xyz");
     if (p) {
         cstr_assign_n(&text, p, 10);
         printf("%s: %d\n", text.str, (int) (p - vec.str));
     }
+
     cstr_destr(name);
     cstr_destr(hello);
     cstr_destr(text);
     cstr_destr(vec);
-}
+ }
