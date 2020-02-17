@@ -73,11 +73,15 @@ int main()
     printf("name2: %s %zd\n", name.str, sizeof(size_t));
 
     int i, n = 100000;
+    /*
     CString vec = cstr_null;
     cstr_reserve(&vec, n);
     for (i=0; i<n; ++i)
         cstr_push(&vec, 'a' + (rand() % 26));
-
+    */
+    CString vec = cstr_alloc(n, n);
+    for (i=0; i<n; ++i)
+        vec.str[i] = 'a' + (rand() % 26);
     p = cstr_find(vec, "xyz");
     if (p) {
         cstr_assign_n(&text, p, 10);

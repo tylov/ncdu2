@@ -78,7 +78,7 @@ static inline CString* cstr_assign_n(CString* cs_ptr, const char* str, cstr_size
         CString cs = cstr_init_n(str, len);
         cstr_destr(*cs_ptr);
         *cs_ptr = cs;
-    } else if (len) {
+    } else {
         memmove(cs_ptr->str, str, len);
         cs_ptr->str[len] = '\0';
         _cstr_rep(*cs_ptr)[0] = len;
@@ -97,12 +97,9 @@ static inline CString* cstr_assign_s(CString* cs_ptr, CString cs2) {
 
 static inline CString* cstr_append_n(CString* cs_ptr, const char* str, cstr_size_t len) {
     cstr_size_t newsize = cstr_size(*cs_ptr) + len;
-    if (newsize > cstr_capacity(*cs_ptr)) {
+    if (newsize > cstr_capacity(*cs_ptr))
         cstr_reserve(cs_ptr, (newsize * 5) / 3);
-        memcpy(&cs_ptr->str[cstr_size(*cs_ptr)], str, len);
-    } else if (len) {
-        memmove(&cs_ptr->str[cstr_size(*cs_ptr)], str, len);
-    }
+    memmove(&cs_ptr->str[cstr_size(*cs_ptr)], str, len);
     cs_ptr->str[newsize] = '\0';
     _cstr_rep(*cs_ptr)[0] = newsize;
     return cs_ptr;
