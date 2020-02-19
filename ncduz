@@ -64,19 +64,13 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 if [ $HELP == 1 ]; then
    echo "`basename $0` {-i|-s|-S|-m} [-z indexfile]"
    echo "  -h, --help                 This help"
-   echo "  -z file, --gzfile file     Gzipped file structure index. Default $DEFAULT.ncdu.gz"
-   echo "  -i, --import               Import index file in ncdu2 (default or specified by -z)"
+   echo "  -z file, --gzfile file     Gzipped file index. Default $DEFAULT.ncdu.gz"
+   echo "  -i, --import               Import index file in ncdu2 (default mode)"
    echo "  -s, --save                 Scan folder tree, export new index file and quit"
    echo "  -S                         Scan folder tree, export new index, import it in ncdu2"
    echo "  -m, --memory               Scan folder tree without saving index, open ncdu2"
    echo ""
    `dirname $0`/ncdu2 --help
-elif [ $IMPORT == 1 ]; then
-   if [ -f $FILE ]; then
-     gzip -dc $FILE | `dirname $0`/ncdu2 -f- $*
-   else
-     echo "Could not import file '$FILE'"
-   fi
 elif [ $CREATE != 0 ]; then
    `dirname $0`/ncdu2 -1 --exclude .snapshots -o- $* | gzip > $FILE.tmp
    if [ -f $FILE.tmp ]; then
@@ -90,6 +84,9 @@ elif [ $CREATE != 0 ]; then
    fi
 elif [ $SCAN == 1 ]; then
    `dirname $0`/ncdu2 --exclude .snapshots $*
+elif [ -f $FILE ]; then
+   gzip -dc $FILE | `dirname $0`/ncdu2 -f- $*
 else
-   echo Please specify either -i, -s, -m, or -h for help.
+   echo "  No index file '$FILE' to import."
+   echo "  Create index file with -s, or -h for help."
 fi
