@@ -155,8 +155,8 @@ void help_draw() {
       ncprint( y+4, x+30, "2 v%s", PACKAGE_VERSION);
       ncaddstr( 9,  7, "Written by Yoran Heling <projects@yorhel.nl>");
       ncaddstr(10,  7, "   https://dev.yorhel.nl/ncdu/");
-      ncaddstr(11,  7, "and Tyge Løvset <tylo@norceresearch.no>");
-      ncaddstr(12,  7, "   https://github.com/tylo-work/ncdu2");
+      ncaddstr(11,  7, "and Tyge Lovset <tylo@norceresearch.no>");
+      ncaddstr(12,  7, "   https://github.com/tylov/ncdu2");
       break;
   }
 }

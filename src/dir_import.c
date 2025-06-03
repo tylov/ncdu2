@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
 #include <limits.h>
 
 
@@ -56,7 +57,7 @@
 
 
 int dir_import_active = 0;
-uint64_t dir_import_timestamp = 0;
+time_t dir_import_timestamp = 0;
 
 /* Use a struct for easy batch-allocation and deallocation of state data. */
 struct ctx {

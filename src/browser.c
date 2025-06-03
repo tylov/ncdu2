@@ -30,6 +30,7 @@
 #include <ncurses.h>
 #include <time.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 static int graph = 3, info_show = 0, info_page = 0, info_start = 0, show_items = 1, show_mtime = 1;
 static char *message = NULL;
@@ -470,8 +471,8 @@ int compare_stats(const void *a, const void *b)
 {
   struct userdirstats *stats_a = (struct userdirstats *) a,
                       *stats_b = (struct userdirstats *) b;
-  // Dont take diff, because they are unsigned 64 bits.
-  return stats_b->size < stats_a->size ? -1 : stats_b->size > stats_a->size ? 1 : 0;
+  // sort from largest to smallest usage:
+  return (stats_a->size > stats_b->size) - (stats_a->size < stats_b->size);
   // Items:
   //return stats_a->items - stats_b->items;
   // Username:
@@ -510,7 +511,7 @@ void write_report(void)
     if (dir_import_active) {
       tm = dir_import_timestamp;
     }
-    sprintf(path1, "%s/.ncdu2", getenv("HOME"));
+    snprintf(path1, sizeof path1, "%s/.ncdu2", getenv("HOME"));
     if (stat(path1, &sb) == -1) {
       if (mkdir(path1, 0775) == -1) {
         message = "Cannot create $HOME/.ncdu2  folder";
@@ -518,7 +519,7 @@ void write_report(void)
       }
     }
     strftime(timebuf, sizeof(timebuf), "%Y-%m-%d", localtime(&tm));
-    sprintf(path2, "%s/report-%s", path1, timebuf);
+    snprintf(path2, sizeof path2, "%s/report-%s", path1, timebuf);
     if (stat(path2, &sb) == -1) {
       if (mkdir(path2, 0775) == -1) {
         message = "Cannot create report in $HOME/.ncdu2 folder";
